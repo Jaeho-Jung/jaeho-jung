@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jazz is a Language - 재즈는 언어다. — Jaeho Jung</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/media.css" />
+  </head>
+  <body class="site">
+    <header class="header">
+      <div class="wrap header-wrap">
+        <a href="../index.html#home" class="logo">Jaeho Jung</a>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="../index.html#about" class="nav-link">About</a>
+          <a href="../index.html#projects" class="nav-link">Research</a>
+          <a href="index.html" class="nav-link active">Writing</a>
+          <a href="../index.html#performance" class="nav-link">Performance</a>
+          <a href="../index.html#contact" class="nav-link">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <article class="post-page wrap">
+        <div class="post-kicker">Jazz Is a Language</div>
+        <div class="post-content">
+<h1>Jazz is a Language - 재즈는 언어다.</h1>
+<hr />
+<h2>왜 재즈인가?</h2>
+<p>재즈 즉흥연주를 들으면 &quot;즉흥&quot;이라는 말이 무색할 만큼 논리적인 구조가 느껴진다. 코드 진행에 따른 음 선택, 리듬 패턴의 반복과 변형, 콜 앤 리스폰스 등 재즈의 문법은 언어의 문법과 닮았다.</p>
+<p>음악 교육 현장에서 흔히 &quot;Jazz is a Language&quot;라는 비유로 재즈를 설명한다. 정말 재즈가 언어라면, <strong>재즈 솔로를 시퀀스 언어 모델로 학습시키면 어떻게 될까?</strong></p>
+<p>이 시리즈는 그 질문에 답하기 위해 진행한 프로젝트의 기록이다. Weimar Jazz Database(WJD)의 실제 재즈 솔로 데이터를 바탕으로, RNN, LSTM, Transformer, Music Transformer까지 순차적으로 구현, 학습하여 비교했다.</p>
+<p>코드는 모두 공개되어 있다.</p>
+<ul><li>테이블형 표현 + RNN/LSTM/Transformer: <a href="https://github.com/Jaeho-Jung/Jazz-Is-a-Language" target="_blank" rel="noreferrer">GitHub — Jazz-Is-a-Language</a></li><li>Modified REMI + Music Transformer: <a href="https://github.com/Jaeho-Jung/MusicTransformer-Pytorch" target="_blank" rel="noreferrer">GitHub — MusicTransformer-Pytorch</a></li></ul>
+<hr />
+<h2>문제 설정: 왜 코드 조건부 생성인가</h2>
+<p>이 프로젝트의 태스크는 코드 진행을 조건으로 한 솔로 생성이다. 다시 말해, 비조건부 생성(unconditional generation)이 아닌 조건부 생성(continional generation)을 다룬다. 이렇게 설정한 이유는 세 가지다.</p>
+<ol><li>음악적 타당성</li></ol>
+<p>재즈 즉흥연주는 본질적으로 조건부 과제다. 연주자는 미리 정해진 코드 진행 위에서 솔로를 한다. 즉, 주어진 화성 조건에 반응해 음을 선택한다. 비조건부 생성은 재즈처럼 들리는 음의 나열은 만들 수 있어도, 실제 즉흥연주가 푸는 문제를 모델링하지 않는다.</p>
+<ol start="2"><li>평가 가능성</li></ol>
+<p>조건이 있으면 &quot;생성된 음이 현재 코드의 코드톤인가, 텐션인가, 어보이드 노트인가&quot;라는 객관적 측정측이 생긴다.</p>
+<ol start="3"><li>실용성</li></ol>
+<p>코드 진행을 입력받아 솔로를 출력하는 구조여야 &quot;이 곡의 코드 위에 솔로를 만들어줘&quot; 같은 데모로 이어질 수 있다.</p>
+<p>물론 트레이드오프도 있다. 모델이 화성 정보에 의존하게 되어 표현의 자유도가 줄고, 코드 어노테이션이 없는 데이터는 사용할 수 없으므로 학습 데이터 풀이 제한된다. 그리고 조건을 어떻게 주입할 것인가 라는 설계 변수가 추가된다. 실제로 이 프로젝트에서 조건 주입 메커니즘이 다른 두 가지 표현 방식이 사용되었다. (테이블형/ Modified REMI)</p>
+<hr />
+<h2>데이터: 왜 Weimar Jazz Database인가</h2>
+<p><a href="https://jazzomat.hfm-weimar.de/" target="_blank" rel="noreferrer">Weimar Jazz Database</a>는 Miles Davis, Charlie Parker, John Coltrane 등 재즈 거장들의 솔로를 음표 단위로 정량화한 데이터셋이다. 후보가 된 다른 데이터셋과 비교하면 선택 이유가 명확해진다.</p>
+<ul><li>Doug McKenzie Jazz Piano: 피아노 연주 MIDI 모음. 솔로 라인과 컴핑이 한 트랙에 섞여 있고, 화음·구조 어노테이션이 없다. 멜로디 추출이라는 별도 난제가 생긴다.</li><li>iRealPro: 코드 진행은 풍부하지만 선율이 없다. 조건만 있고 정답이 없는 셈이다.</li><li>WJD: 전문가가 트랜스크립션·검수한 단선율(monophonic) 솔로에, 각 음표마다 피치·온셋·지속시간,  코드 컨텍스트, 박자 위치, 선율 구조 분석(MLU), 폼 섹션 레이블까지 붙어 있다.</li></ul>
+<p>WJD만이 &quot;실제 거장의 단선율 솔로 + 동기화된 코드 어노테이션&quot;을 동시에 제공하기 때문에 WJD를 선택했다. 단선율 솔로이기 때문에 다성부 분리 없이 곧바로 시퀀스 모델링에 적용할 수 있다. 또한 BebopNet, Jazz Transformer 등 선행 연구들이 같은 데이터셋을 사용해 비교 기준점이 존재한다는 것도 장점이다.</p>
+<p>트레이드오프는 데이터의 규모다. 약 450개의 솔로로 데이터가 작다. 이 제약으로 인해 12키 증강, 도메인 지식을 압축한 피처 설계, 작은 모델 + 강한 정규화 등의 설계를 시도하게 된다.</p>
+<h3>전처리: 12키 증강과 7개의 핵심 피처</h3>
+<p>전처리 파이프라인(<code>src/Preprocess/</code>)에서는 두 가지 핵심 작업을 했다.</p>
+<p>12키 증강 (Key Augmentation) — <code>preprocess.py:444</code></p>
+<p>원본 솔로를 반음씩 전조해 12배(−6 ~ +5 semitones)로 데이터를 늘렸다. 재즈에서는 같은 프레이징이 다른 키에서도 동일하게 동작하므로, 음악적으로 타당하다.</p>
+<p>7개 핵심 피처 추출</p>
+<div class="markdown-table-wrap"><table><thead><tr><th>피처</th><th>범위</th><th>의미</th><th>생성 위치</th></tr></thead><tbody><tr><td><code>pitch</code></td><td>0–128</td><td>MIDI 피치 (128 = 쉼표)</td><td>WJD 원본</td></tr><tr><td><code>rel_pitch</code></td><td>0–12</td><td>코드 루트 기준 상대 피치</td><td><code>preprocess.py:285–292</code></td></tr><tr><td><code>duration</code></td><td>dynamic vocab</td><td>48-grid 기준 음표 길이</td><td><code>preprocess.py:222</code></td></tr><tr><td><code>prev_interval</code></td><td>0–24</td><td>직전 음과의 반음 간격 (+12 offset)</td><td><code>preprocess.py:244</code></td></tr><tr><td><code>chord_root</code></td><td>0–12</td><td>코드 루트 피치 클래스</td><td><code>_align_chords</code>, <code>preprocess.py:121</code></td></tr><tr><td><code>chord_quality</code></td><td>0–6</td><td>코드 종류 (maj7, dom7, m7 등)</td><td>〃</td></tr><tr><td><code>metric_pos</code></td><td>0–47</td><td>마디 내 48-grid 위치</td><td><code>preprocess.py:213</code></td></tr></tbody></table></div>
+<p>이 표현의 핵심은 절대 피치와 상대 피치를 동시에 제공한다는 점이다. 모델이 &quot;지금 치는 음&quot;과 &quot;현재 코드에서 그 음이 어떤 기능을 하는지&quot;를 각각 다른 임베딩으로 학습할 수 있다.</p>
+<hr />
+<h2>모델 라인업과 실험 설계</h2>
+<p>이 프로젝트는 두 가지 축으로 모델을 구성했다.</p>
+<h3>축 1 - 아키텍처 비교 (표현 고정)</h3>
+<p>동일한 7-피처 표현 위에서 시퀀스 모델만 바꿔가며 구현했다. 변수가 하나이므로 통제된 ablation이 가능하도록 설계했다.</p>
+<pre><code>RNN  →  LSTM  →  Transformer
+(NumPy Scratch + PyTorch 최적화 구현 병행)</code></pre>
+<p>NumPy 구현은 역전파 수식을 직접 유도해본 후 작성하였다. <code>loss.backward()</code> 한 줄로 끝내는 것보다 훨씬 많이 배울 수 있었다.</p>
+<ul><li>솔직히 말하자면, 설계는 ablation이 가능하도록 했지만, 세 모델을 동일 프로토콜로 비교한 체계적 정량 실험까지는 완료하지 못했다. 각 모델의 학습 loss는 추적했으나 비교 가능한 형태로 기록된 정량 지표가 없고, 생성 샘플의 청취 기반 정성 평가가 비교의 전부였다. 이 한계와 그로부터 배운점은 3편과 4편의 회고에서 자세히 다룬다.</li></ul>
+<h3>축 2 - 표현(Representation) 비교</h3>
+<p>테이블형 표현 위의 Transformer와, 아예 다른 표현 방식을 쓰는 Music Transformer를 비교했다. 아키텍처와 표현이 동시에 달라지므로 엄밀한 ablation은 아니고, 설계 철학의 비교에 가깝다.</p>
+<p>두 시스템은 같은 WJD를 사용하지만 별개의 전처리 파이프라인을 갖는다. 격자 해상도(48-grid vs 64-slot), 코드 표현(정수 인덱스 vs 토큰 분해), velocity 포함 여부까지 다르다.</p>
+<p>즉 1~3편의 세 모델은 REMI를 전혀 사용하지 않으며, 4편의 Music Transformer는 7-피처 테이블을 전혀 사용하지 않는다.</p>
+<div class="markdown-table-wrap"><table><thead><tr><th>시스템</th><th>표현 방식</th><th>전처리</th><th>아키텍처</th></tr></thead><tbody><tr><td>RNN / LSTM / Transformer</td><td>7-피처 테이블형 임베딩</td><td><code>Jazz-Is-a-Language/src/Preprocess</code></td><td>각각 다름</td></tr><tr><td>Music Transformer</td><td>Modified REMI 이벤트 토큰</td><td><code>MusicTransformer-Pytorch/src</code></td><td>Relative Self-Attention</td></tr></tbody></table></div>
+<hr />
+<h2>시리즈 구성</h2>
+<div class="markdown-table-wrap"><table><thead><tr><th>편</th><th>핵심 질문</th></tr></thead><tbody><tr><td><strong>1편: RNN</strong></td><td>시퀀스 모델의 시작점. NumPy BPTT 직접 구현과 gradient 검증</td></tr><tr><td><strong>2편: LSTM</strong></td><td>게이팅 메커니즘이 gradient 흐름을 어떻게 바꾸는가</td></tr><tr><td><strong>3편: Transformer</strong></td><td>Attention이 시퀀스 모델에 무엇을 바꾸는가. NumPy MHA 역전파</td></tr><tr><td><strong>4편: Music Transformer</strong></td><td>REMI 표현, Relative Attention, 그리고 두 표현 방식의 설계 철학</td></tr></tbody></table></div>
+<hr />
+<h2>프로젝트를 시작한 이유</h2>
+<p>이 프로젝트에는 출발점이 있었다. 학교에서 주최한 AI 콘텐츠 공모전이다.</p>
+<p>그 공모전은 모델을 설계·학습시켜 문제를 푸는 기술 대회가 아니라, 기존 모델을 활용해 웹툰·음악·시·영상 같은 분야에서 양질의 콘텐츠를 만들어내는 것이 목적이었다. 대부분의 참가자가 이미 잘 동작하는 생성 모델을 가져다 결과물을 다듬는 방향으로 접근했다. 나는 거기서 조금 다른(지금 돌아보면 무모한)도전을 했다. 기존 음악 생성 모델을 쓰는 대신, <strong>언어 모델에 재즈 솔로를 직접 학습시켜 솔로를 생성하는 모델을 만들고, 그 출력을 제출하겠다</strong>는 목표를 세운 것이다.</p>
+<p>문제는 그때 내가 아는 것이 많지 않았다는 점이다. 가진 경험이라곤 언어 모델을 파인튜닝해본 것뿐이라, &quot;언어 모델을 잘 파인튜닝하면 생성기가 되겠지&quot;라고 단순하게 생각했다. 음악 생성 전용 모델이라는 선택지가 있다는 것조차 떠올리지 못했다. 그 과정에서 Weimar Jazz Database를 처음 만났고, 데이터를 나름대로 변형해 언어 모델에 밀어 넣었다. 결과는—예상대로 좋지 않았다. 솔직히 허술한 결과물이었다.</p>
+<p>그래도 그 시행착오의 전 과정을 빠짐없이 기록해 제출했고, 심사위원이 그 노력을 가상하게 봐주신 덕분에 입상은 했다. 참가상에 가까운 결과였지만, 나에게 남은 건 상장이 아니라 풀리지 않은 질문들이었다.</p>
+<blockquote><p><em>왜 언어 모델은 재즈를 제대로 배우지 못했을까?</em></p><p><em>데이터를 &quot;변형&quot;한다는 게 정확히 무슨 뜻이어야 했을까?</em></p><p><em>애초에 음악을 시퀀스로 표현하는 올바른 방법은 무엇일까?</em></p></blockquote>
+<p>이 프로젝트는 그 질문들에 제대로 답해보려고 시작한, 공모전의 이어달리기다. 이번에는 밑바닥부터 다시 쌓기로 했다. 모델을 NumPy로 직접 구현해 역전파를 손으로 유도하고, 음악을 어떻게 표현할지(7-피처 테이블 vs REMI)를 의식적으로 설계하고, 각 선택이 결과를 어떻게 바꾸는지 확인하는 것. 그래서 도메인은 자연스럽게 다시 재즈가 됐다. 재즈를 좋아하기도 했고, WJD라는 잘 정리된 데이터셋을 이미 손에 익혔으니까.</p>
+<h2>왜 이 순서로 전부 구현했나</h2>
+<p>그렇다면 처음부터 Transformer만 구현해도 됐을 텐데, 왜 RNN → LSTM → Transformer 순서로 전부 구현했을까. 처음부터 Transformer만 구현해도 &quot;동작하는 결과물&quot;은 얻었을 것이다. 하지만 공모전에서 배운 교훈이 바로 그것이었다. &quot;동작하는 결과물과 이해는 다르다.&quot; 그때 나는 결과물을 얻고도 왜 그런지 설명하지 못했다. 이번 목적은 결과물이 아니라 각 구조가 무엇을 해결하기 위해 등장했는지를 gradient 수준에서 체감하는 것이었다.</p>
+<ul><li>RNN을 먼저 구현해야 vanishing gradient가 교과서의 문장이 아니라 &quot;<code>W_hh</code>를 T번 반복해서 곱하는 코드&quot;로 보인다.</li><li>그 다음 LSTM을 구현하면 cell state의 덧셈 구조가 무엇을 대체한 것인지 명확해진다. 순서를 건너뛰면 이 대비를 체감할 수 없다.</li><li>Transformer에 도달하면 &quot;순차 의존성 제거 + 전체 위치 예측&quot;이 앞 두 모델의 어떤 비효율을 없앤 것인지 정확히 안다.</li></ul>
+<p>요컨대 이 순서는 시퀀스 모델의 발전사를 직접 재현해본 것이다. 그리고 더 멀리 보면—언어 모델에 재즈를 무작정 밀어 넣어 실패했던 그 공모전을, 이번엔 제대로 다시 푸는 일이다.</p>
+<p>다음 편: <strong>[1편] RNN으로 재즈 솔로 생성하기 — 밑바닥 역전파부터 PyTorch까지</strong></p>
+        </div>
+        <nav class="post-nav" aria-label="Post navigation">
+          <a href="index.html">All posts</a>
+          <a href="../index.html#writing">Back to home</a>
+        </nav>
+      </article>
+    </main>
+  </body>
+</html>

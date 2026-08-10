@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>[3편] Transformer — Self-Attention — Jaeho Jung</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/media.css" />
+  </head>
+  <body class="site">
+    <header class="header">
+      <div class="wrap header-wrap">
+        <a href="../index.html#home" class="logo">Jaeho Jung</a>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="../index.html#about" class="nav-link">About</a>
+          <a href="../index.html#projects" class="nav-link">Research</a>
+          <a href="index.html" class="nav-link active">Writing</a>
+          <a href="../index.html#performance" class="nav-link">Performance</a>
+          <a href="../index.html#contact" class="nav-link">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <article class="post-page wrap">
+        <div class="post-kicker">Jazz Is a Language</div>
+        <div class="post-content">
+<h1>[3편] Transformer — Self-Attention</h1>
+<blockquote><p>이 글은 &quot;Jazz is a Language&quot; 시리즈의 3편이다.</p><p>GPT-style Decoder-Only Transformer를 PyTorch와 NumPy로 구현하고,</p><p>RNN/LSTM과의 근본적인 구조 차이를 다룬다.</p><p>코드 참조: <a href="https://github.com/Jaeho-Jung/Jazz-Is-a-Language" target="_blank" rel="noreferrer">Jazz-Is-a-Language</a> 저장소, <code>파일경로:줄번호</code> 형식.</p></blockquote>
+<hr />
+<h2>RNN/LSTM의 구조적 제약</h2>
+<p>LSTM은 vanishing gradient 문제를 많이 완화했지만, 순차 의존성이라는 근본적인 제약이 남아 있다. <code>h_t</code>를 계산하려면 반드시 <code>h_{t-1}</code>이 먼저 완료되어야 한다. 이 순차 의존성으로 인해 두 가지 문제점이 발생한다.</p>
+<ol><li>병렬화 불가: 시퀀스 길이에 비례해 순차 계산이 필요하다. GPU의 병렬 연산을 활용하지 못한다.</li><li>고정된 병목: 모든 과거 정보가 고정 크기의 hidden state <code>h_t</code> 하나에 압축된다. seq_len이 길면 초기 정보가 손실된다.</li></ol>
+<p>Transformer는 이 두 제약을 모두 제거한다.</p>
+<hr />
+<h2>Self-Attention의 직관</h2>
+<p>Self-Attention의 핵심 아이디어는 시퀀스의 모든 위치의 직접 연결하는 것이다.</p>
+<pre><code>Attention(Q, K, V) = softmax(Q·K^T / √d_k) · V</code></pre>
+<ul><li>Q(Query): &quot;나는 무엇을 찾고 있는가?&quot;</li><li>K (Key): &quot;나는 어떤 정보를 갖고 있는가?&quot;</li><li>V (Value): &quot;내가 실제로 전달하는 값&quot;</li><li>√d_k: attention score의 분산이 지나치게 커지는 것을 방지하는 스케일링</li></ul>
+<p>Causal (Decoder-Only) 설정에서는 위치 <code>t</code>가 <code>t+1, t+2, ...</code>를 볼 수 없다. 하삼각 마스크를 적용해 미래를 차단한다.</p>
+<hr />
+<h2>Teacher Forcing</h2>
+<p>RNN/LSTM은 마지막 hidden state <code>h_T</code>만 출력 헤드에 통과시킨다. 이번 Transformer에서는 모든 위치에서 동시에 다음 토큰을 예측하도록 구현하였다.</p>
+<p>이로 인해 학습 효율이 크게 향상된다. 길이 T의 시퀀스 하나로 T개의 예측-정답 쌍을 동시에 학습할 수 있다.</p>
+<p>코드에서는 Dataset이 이렇게 처리한다 (<code>src/Transformer_pytorch/dataset.py:108–118</code>):</p>
+<pre><code>features = {k: arr[start:end]       for k in feature_keys}   # (T,)
+targets  = {&#39;pitch&#39;: pitch[start+1:end+1],                    # (T,) — 한 칸 shift
+            &#39;duration&#39;: dur[start+1:end+1]}</code></pre>
+<p>모델은 <code>(B, T, vocab)</code> shape logit을 반환하고, loss는 <code>(B*T,)</code> 토큰 전체의 평균이다.</p>
+<p>이 학습방식은 teacher forcing이다. 위치 t의 입력은 항상 ground truth <code>x_t</code>이고, 학습 중 모델은 단 한 번도 자기 출력 위에서 예측해본 적이 없다. 이 받식은 inference에서 exposure bias를 만들 수 있다. 4편에서 두 표현 방식을 대조하며 다룬다.</p>
+<hr />
+<h2>아키텍처 구성</h2>
+<pre><code>입력 피처 (7개) → 임베딩 → Concat (B, T, 76)
+                              ↓
+                    input_proj Linear (76 → 128)
+                              ↓
+              ┌───────────────────────────────┐
+              │  Pre-LN TransformerBlock × 3  │
+              │                               │
+              │  x = x + MHA(LN(x))           │
+              │  x = x + FFN(LN(x))           │
+              └───────────────────────────────┘
+                              ↓
+                     Pitch Head (B, T, 129)
+                     Duration Head (B, T, vocab_dur)</code></pre>
+<p>하이퍼파리미터 (Transformer_pytorch 기준, vocab/임베딩 정의는 <code>src/Transformer_pytorch/config.py:28–51</code>):</p>
+<div class="markdown-table-wrap"><table><thead><tr><th>항목</th><th>값</th></tr></thead><tbody><tr><td>d_model</td><td>128</td></tr><tr><td>n_heads</td><td>4</td></tr><tr><td>num_layers</td><td>3</td></tr><tr><td>dropout</td><td>0.3</td></tr><tr><td>seq_len</td><td>64</td></tr><tr><td>label smoothing</td><td>0.1</td></tr><tr><td>LR schedule</td><td>Linear warmup + CosineAnnealingWarmRestarts</td></tr></tbody></table></div>
+<p>작은 모델 + 강한 정규화(dropout 0.3, label smoothing)는 WJD의 데이터 규모에 맞춘 선택이다.</p>
+<p>mixed precision(AMP) 사용 시 gradient clipping은 unscale을 먼저 한 뒤 적용한다. (<code>src/Transformer_pytorch/trainer.py:122–124</code>). GreadScaler가 곱해둔 스케일이 남아있는 상태에서 norm을 재면 clipping 기준이 왜곡되기 때문이다. 1, 2편과 마찬가지로 clipping은 예방 조치이며 exploding은 관측되지 않았다.</p>
+<hr />
+<h2>Pre-LN vs Post-LN</h2>
+<p>원래 &quot;Attention is All You Need&quot; (2017)의 Transformer는 Post-LN이다:</p>
+<pre><code># Post-LN
+x = LN(x + MHA(x))
+x = LN(x + FFN(x))</code></pre>
+<p>GPT-2 이후 실무에서는 Pre-LN이 표준이 됐다:</p>
+<pre><code># Pre-LN
+x = x + MHA(LN(x))
+x = x + FFN(LN(x))</code></pre>
+<p>Pre-LN의 장점: 학습 초기 gradient가 안정적이다. LN이 잔차 연결 전에 적용되므로, gradient가 LayerNorm을 우회해 residual path로 직접 흐를 수 있다. 결과적으로 warmup 없이도 학습이 시작되고, 더 높은 학습률을 쓸 수 있다.</p>
+<hr />
+<h2>Multi-Head Attention 역전파</h2>
+<p>Multi-Head Attention 역전파가 이 프로젝트에서 가장 까다로운 부분이었다. 가장 중요한 코드는 다음 한 줄이다.</p>
+<pre><code># attn: (B, h, T, T) — post-softmax attention weights
+# grad_attn: upstream gradient
+grad_scores = attn * (grad_attn - (grad_attn * attn).sum(axis=-1, keepdims=True))</code></pre>
+<p>여기서 <code>grad_scores</code>는 softmax 이전 값, 즉 attention score에 대한 gradient다. 다시 말해 forward에서 다음과 같은 흐름이 있었다면,</p>
+<pre><code>scores = Q @ K.T / sqrt(d_k)
+attn = softmax(scores)
+out = attn @ V</code></pre>
+<p>위 한 줄은 역전파 중에서</p>
+<pre><code>grad_attn -&gt; grad_scores</code></pre>
+<p>로 넘어가는 부분이다. 겉으로 보면 단순한 원소별 곱과 합산처럼 보이지만, 실제로는 softmax의 Jacobian-vector product를 압축한 형태다.</p>
+<h3>왜 <code>grad_attn * attn</code>이 아닐까?</h3>
+<p>ReLU나 tanh같은 활성함수는 각 원소가 독립적으로 변한다. 입력 <code>x_i</code>가 바뀌면 출력 <code>y_i</code>만 바뀌고, 다른 출력에는 직접 영향을 주지 않는다. 그래서 역전파도 보통 원소별 미분을 곱하면 끝난다.</p>
+<p>하지만 softmax는 다른다.</p>
+<pre><code>a_i = exp(z_i) / Σ exp(z_j)</code></pre>
+<p>각 출력 <code>a_i</code>는 자기 입력 <code>z_i</code>만 보는 것이 아니라, 분모를 통해 모든 <code>z_j</code>를 함께 본다. 따라서 <code>z_j</code> 하나가 변하면 softmax 출력 전체가 바뀐다. attention에서 한 query가 보는 분포 하나를 생각하면, 길이 T짜리 벡터에 대해 T × T Jacobian이 생긴다.</p>
+<p>성분별 미분은 다음과 같다.</p>
+<pre><code>∂a_i/∂z_j = a_i(δ_ij − a_j)</code></pre>
+<p>이를 행렬로 쓰면 softmax Jacobian은 다음 형태가 된다.</p>
+<pre><code>J = diag(a) − a aᵀ</code></pre>
+<p>즉 softmax의 역전파는 본질적으로 “원소별 곱”이 아니라 “Jacobian과 gradient 벡터의 곱”이다.</p>
+<h3>하지만 Jacobian을 직접 만들면 안 된다.</h3>
+<p>attention weight attn의 shape은 보통 <code>(B, h, T, T)</code>이다.</p>
+<p>여기서 마지막 축 T에 대해 softmax가 적용된다. 즉 각 batch, 각 head, 각 query position마다 길이 T짜리 softmax 분포가 하나씩 있다.</p>
+<p>만약 각 softmax 분포마다 Jacobian을 직접 만들면, 원래 <code>(B, h, T, T)</code>였던 attention 텐서가 역전파 과정에서 <code>(B, h, T, T, T)</code>로 커진다.</p>
+<p>마지막에 Jacobian의 T × T가 추가되기 때문이다. sequence length가 조금만 커져도 메모리 비용이 급격히 증가한다. 그래서 실제 구현에서는 Jacobian을 명시적으로 만들지 않고, Jacobian-vector product를 닫힌 형태로 계산해야 한다.</p>
+<h3>Softmax 역전파의 닫힌 형태</h3>
+<p>softmax 출력이 <code>a</code>, upstream gradient가 <code>g</code>라고 하자. 우리가 구하려는 것은 softmax 입력 <code>z</code>에 대한 gradient다.</p>
+<pre><code>∂L/∂z = Jᵀ g</code></pre>
+<p>softmax Jacobian은 대칭이므로 다음처럼 쓸 수 있다.</p>
+<pre><code>∂L/∂z = (diag(a) − a aᵀ) g</code></pre>
+<p>이를 전개하면,</p>
+<pre><code>= diag(a)g − a(aᵀg)
+= a ⊙ g − a ⊙ ⟨g, a⟩
+= a ⊙ (g − ⟨g, a⟩)</code></pre>
+<p>이 식이 그대로 코드가 된다.</p>
+<pre><code>grad_scores = attn * (grad_attn - (grad_attn * attn).sum(axis=-1, keepdims=True))</code></pre>
+<pre><code>(grad_attn * attn).sum(axis=-1, keepdims=True)</code></pre>
+<p>이 부분은 마지막 축 기준으로 grad_attn과 attn의 행별 내적을 계산한다. 수식으로는 <code>⟨g, a⟩</code>에 해당한다.</p>
+<p>즉 각 attention row마다 upstream gradient의 weighted average를 구하는 것이다.</p>
+<pre><code>grad_attn - weighted_average</code></pre>
+<p>는 upstream gradient에서 그 행의 평균적인 gradient 방향을 빼는 연산이다.</p>
+<pre><code>attn * (...)</code></pre>
+<p>를 통해 softmax 출력값 a를 다시 곱한다. 결과적으로 각 원소는 다음 형태가 된다.</p>
+<pre><code>a_i (g_i − Σ_j g_j a_j)</code></pre>
+<p>이것이 softmax 입력 score에 대한 gradient다.</p>
+<h3>직관</h3>
+<p>이 식을 직관적으로 보면 더 이해하기 쉽다. softmax 출력은 확률분포처럼 합이 항상 1이다.</p>
+<pre><code>Σ a_i = 1</code></pre>
+<p>따라서 모든 성분을 똑같이 키우는 방향의 gradient는 softmax 공간에서 의미가 없다. 어떤 값을 키우려면 상대적으로 다른 값을 줄여야 한다. softmax는 절대적인 크기보다 성분 간 상대적 차이에 반응하기 때문이다.</p>
+<p>그래서 역전파에서도 단순히 grad_attn을 그대로 전달하지 않는다. 먼저 행별 가중 평균 <code>⟨g, a⟩</code>을 빼서, softmax 분포 안에서 실제로 의미 있는 상대적 gradient만 남긴다.</p>
+<p>즉 이 코드는 다음을 한 번에 수행한다.</p>
+<ol><li>upstream gradient에서</li><li>softmax 분포의 평균 방향을 제거하고,</li><li>각 attention weight의 크기만큼 다시 스케일링한다.</li></ol>
+<p>그래서 최종 구현은 Jacobian을 만들지 않으면서도 softmax의 full Jacobian 효과를 정확히 반영한다.</p>
+<pre><code>grad_scores = attn * (grad_attn - (grad_attn * attn).sum(axis=-1, keepdims=True))</code></pre>
+<p>겉으로는 NumPy broadcasting 한 줄이지만, 안쪽에서는 <code>diag(a) − a aᵀ</code>라는 softmax Jacobian 전체를 암묵적으로 계산하고 있다.이 한 줄이 MHA 역전파에서 메모리 효율성과 수학적 정확성을 동시에 만족시키는 핵심이다.</p>
+<h3>Multi-Head Attention Backward</h3>
+<pre><code># 1. out_proj backaward
+grad_out = self.out_proj.backward(grad_out) # (B, T, C)
+
+# 2. heads로 reshape
+grad_heads = grad_out.reshape(B, T, h, d).transpose(0, 2, 1, 3) # (B, h, T, d)
+
+# 3. attn_weights @ V 분리
+grad_v    = attn.T @ grad_heads # (B, h, T, d)
+grad_attn = grad_heads @ v.T    # (B, h, T, T)
+
+# 4. dropout backward
+grad_attn = self.attn_dropout.backward(grad_attn)
+
+# 5. softmax backward
+grad_scores = attn * (grad_attn - (grad_attn * attn).sum(axis=1, keepdims=True))
+
+# 6. causal mask
+grad_scores *= causal_mask[:T, :T]
+
+# 7. scale
+grad_scores *= head_dim ** -0.5
+
+# 8. Q·K^T 분리
+grad_q = grad_scores @ K    # (B, h, T, d)
+grad_ = grad_scores.transpose(0, 1, 3, 2) @ Q # (B, h, T, d)
+
+# 9. reshape + proj backward
+return q_proj.backward(grad_q) + k_proj.backward(grad_k) + v_proj.backward(grad_v)</code></pre>
+<ul><li>causal mask: foward에서 -inf 마스킹된 위치는 softmax 출력이 0이므로 수학적으로는 gradient도 0이 되지만, 수치 안정성을 위해 명시적으로 마스킹하였다.</li></ul>
+<p>실제 구현 시 어려웠던 점은 4차원 텐서의 transpose 축 관리였다.</p>
+<h3>Pre-LN TransformerBlock Backward</h3>
+<p>Pre-LN 구조의 역전파는 잔차 연결 덕에 깔끔하다.</p>
+<pre><code>def backward(self, grad_output):
+    # 두 번째 잔차 분기
+    grad_x1 = grad_output + self.ln2.backward(self.ffn.backward(grad_output))
+
+    return grad_x1 + self.ln1.backward(self.mha.backward(grad_x1))</code></pre>
+<p>잔차 연결 <code>x = x + f(LN(x))</code>의 backward는 항상 <code>grad += branch_grad</code> 형태다. gradient가 residual shortcut + 서브레이어의 두 경로로 분기되어 흐른다.</p>
+<hr />
+<h2>구현 중 발생한 버그들</h2>
+<p>NumPy로 Transformer를 구현할 때 여러 버그들이 많았다. 수치 미분 gradient check에 걸려 발련된 세 가지를 버그를 대표적으로 기술하겠다.</p>
+<ol><li><code>Linear.backward</code>의 3D 텐서 처리</li></ol>
+<p>기존 <code>linear.py</code>는 2D 입력만 가정한다.</p>
+<pre><code>self.grad_W = grad_output.T @ self._x</code></pre>
+<p>3D 텐서 (B, T, out)가 입력되면 .T가 축을 모두 뒤집다. <code>(out, T, B) @ (B, T, in)</code>가 되기 때문에 오류가 발생한다.</p>
+<p>수정본</p>
+<pre><code>flat_g = grad_output.reshape(-1, self.output_features)  # (B*T, out)
+flat_x = self._x.reshape(-1, self.input_features)       # (B*T, in)
+self.grad_W = flat_g.T @ flat_x                         # (out, in)</code></pre>
+<ol start="2"><li><code>FeedForward.backward</code>의 순서 오류</li></ol>
+<p>Forward: <code>fc1 → GELU → Dropout → fc2</code></p>
+<p>기존 backward (잘못된 순서)</p>
+<pre><code>grad = fc2.backward(grad)
+grad = grad * gelu_derivative(pre_act)
+grad = dropout.backward(grad)   </code></pre>
+<p>Dropout이 fc2 다음에 와야 하는데 GELU 뒤에 있다.</p>
+<p>수정본</p>
+<pre><code>grad = fc2.backward(grad)
+grad = dropout.backward(grad)
+grad = grad * gelu_derivative(pre_act)
+return fc1.backward(grad)</code></pre>
+<ol start="3"><li><code>TransformerBlock.backward</code>의 잘못된 gradient 합산</li></ol>
+<p>초기 구현에서 forward에서 캐시한 출력값인 <code>self._ffn_out</code> 을 gradient에 더하는 오류가 있었다. 잔차 연결의 backward에서는 출력값을 더하는 것이 아니라, gradient를 두 경로로 분기해 합산하는 것이다.</p>
+<hr />
+<h2>RNN/LSTM과의 차이</h2>
+<div class="markdown-table-wrap"><table><thead><tr><th>항목</th><th>RNN / LSTM</th><th>Transformer</th></tr></thead><tbody><tr><td>처리 방식</td><td>순차 (t-1 → t)</td><td>병렬 (모든 위치 동시)</td></tr><tr><td>위치 간 거리</td><td>O(T) 단계</td><td>O(1) 직접 연결</td></tr><tr><td>정보 병목</td><td>hidden state 크기</td><td>없음 (전체 시퀀스 attention)</td></tr><tr><td>학습 시 target</td><td>마지막 위치만</td><td>모든 위치 (T배 효율)</td></tr><tr><td>파라미터</td><td>비교적 작음</td><td>비교적 큼</td></tr><tr><td>추론 시</td><td>stateful</td><td>매번 전체 컨텍스트 재계산</td></tr></tbody></table></div>
+<hr />
+<h2>세 모델 비교 결과에 대한 기록</h2>
+<p>여기까지 읽었다면 자연스러운 질문이 따라온다. &quot;그래서 Transformer가 RNN보다 얼마나 좋았는데?&quot;</p>
+<p>솔직하게 말하면, 자신 있게 답할 수 없다. 두 가지 이유 때문이다.</p>
+<p>첫째, 비교 가능한 정량 기록이 없다. 각 트레이너는 train/val loss를 출력하고 best model을 저장하지만(<code>src/Transformer_pytorch/trainer.py:72-74</code>), 세 모델을 동일 프로토콜(동일 split, 동일 평가 스크립트)로 비교하는 실험을 체계적으로 수행·기록하지 못했다. 0편에서 &quot;통제된 ablation이 가능하도록 설계했다&quot;라고 작성한 것은 사실이지만, 그 설계를 실험으로 완성하지는 못했다.</p>
+<p>둘째, 청취 기준으로는 차이가 명확하지 않다. 생성 샘플을 들어봤을 때 LSTM이나 Transformer가 RNN보다 확연히 낫다고 말하기 어려웠다. 의외의 결과가 나왔고, 더 생각하게 되었다. 가능한 해석은 두 가지다.</p>
+<ul><li>표현이 이미 너무 많은 일을 해준다. 7-피처 표현은 화성 컨텍스트(chord_root/quality), 박절 위치(metric_pos), 직전 선율 음정(prev_interval)을 매 토큰에 부착한다. 다음 음 하나를 그럴듯하게 예측하는 데 필요한 정보의 대부분이 직전 몇 토큰의 피처 안에 국소적으로 존재한다. 그렇다면 장기 의존성 처리 능력이 발휘될 여지 자체가 줄어든다. 아키텍처의 차이가 드러나려면 표현이 덜 친절해야 한다는 가설이며, 이것이 4편에서 표현 자체를 바꿔보는 동기 중 하나가 된다.</li><li>평가 해상도가 부족하다. 사람 귀의 단발 청취로는 &quot;국소적 자연스러움&quot;과 &quot;장기 구조&quot;를 분리해서 듣기 어렵다.</li></ul>
+<p>차이가 정말 없었던 것인지, 차이를 측정할 도구가 없었던 것인지 현재로선 구분할 수 없다.</p>
+<p>두 해석 모두 같은 결론을 가리킨다. 다음에 가장 먼저 해야 할 일은 모델 추가가 아니라 평가 지표 구축이다. 이 논의는 4편의 섹션에서 이어진다.</p>
+<hr />
+<h2>회고</h2>
+<p><strong>배운 것</strong></p>
+<p>Sofmax backward의 <code>attn <em> (grad - (grad </em> attn).sum(-1, keepdims=True))</code>를 처음 봤을 때 당황스러웠다. Jacobian을 <code>a_i(δ_ij - a_j)</code>로 직접 전개하고 JVP로 정리하면 자연스럽게 나오는 수식이지만, Jacobian을 만들지 않고 Jacobian-벡터 곱만 계산한다는 발상이 역전파 구현의 핵심이라는 것을 배웠다.</p>
+<p><strong>한계</strong></p>
+<p>Positional Embedding의 부재. PyTorch 버전은 학습된 위치 임베딩을 더하지만, Numpy 버전은 <code>input_proj</code>만 있다. 솔로에서 마디 내 위치는 <code>metric_pos</code> 피처로 이미 인코딩되어 있어 영향이 제한적이지만, 이론상 누락이다.</p>
+<p>그리고 위에 적었듯, 세 모델에 대한 체계적 정량 비교를 완료하지 못하였다.</p>
+<hr />
+<p><em>다음: [4편] Music Transformer + Modified REMI — 이벤트 토큰 표현과 Relative Attention</em></p>
+        </div>
+        <nav class="post-nav" aria-label="Post navigation">
+          <a href="index.html">All posts</a>
+          <a href="../index.html#writing">Back to home</a>
+        </nav>
+      </article>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+@media (max-width: 720px) {
+  body {
+    font-size: 16.5px;
+  }
+
+  .wrap {
+    padding-right: 1.25rem;
+    padding-left: 1.25rem;
+  }
+
+  .header-wrap,
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nav {
+    gap: 0.75rem 1rem;
+  }
+
+  .writing-item,
+  .entry-head {
+    display: block;
+  }
+
+  .writing-date,
+  .entry-meta {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+}

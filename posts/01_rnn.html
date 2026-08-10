@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>[1편] RNN으로 재즈 솔로 생성하기 — Jaeho Jung</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/media.css" />
+  </head>
+  <body class="site">
+    <header class="header">
+      <div class="wrap header-wrap">
+        <a href="../index.html#home" class="logo">Jaeho Jung</a>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="../index.html#about" class="nav-link">About</a>
+          <a href="../index.html#projects" class="nav-link">Research</a>
+          <a href="index.html" class="nav-link active">Writing</a>
+          <a href="../index.html#performance" class="nav-link">Performance</a>
+          <a href="../index.html#contact" class="nav-link">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <article class="post-page wrap">
+        <div class="post-kicker">Jazz Is a Language</div>
+        <div class="post-content">
+<h1>[1편] RNN으로 재즈 솔로 생성하기</h1>
+<blockquote><p>이 글은 &quot;Jazz is a Language&quot; 시리즈의 1편이다.</p><p>7-피처 표현 위에서 Vanilla RNN을 NumPy로 직접 구현하고, PyTorch 버전과 비교한다.</p><p>코드 참조는 <a href="https://github.com/Jaeho-Jung/Jazz-Is-a-Language" target="_blank" rel="noreferrer">Jazz-Is-a-Language</a> 저장소의 <code>파일경로:줄번호</code> 형식으로 표기한다.</p></blockquote>
+<hr />
+<h2>RNN이 필요한 이유</h2>
+<p>재즈 솔로는 본질적으로 순서가 있는 데이터다. 지금 연주하는 음은 앞의 음과 연결되어 있다. 앞 구절에서 긴장을 만들고, 다음 구절에서 해소한다. 이를 음악적 언어로 &quot;프레이징&quot;이이라고 한다. 다시말해 재즈 즉흥 솔로는 음악적 맥락에 의존적이다.</p>
+<p>이런 시퀀스 의존성을 처리하는 가장 직관적인 구조가 RNN이다.</p>
+<p>피드포워드 네트워크는 각 타임스텝을 독립적으로 처리하기 때문에, <code>t-1</code> 타임스텝의 정보가 <code>t</code>의 예측에 전혀 반영되지 않는다. RNN은 <strong>hidden state</strong> <code>h_t</code>를 도입해 이 문제를 해결한다.</p>
+<hr />
+<h2>핵심 수식</h2>
+<p>Vanilla RNN의 타밍스텝 업데이트는 한 줄이다:</p>
+<pre><code>h_t = tanh(W_xh · x_t + W_hh · h_{t-1} + b_h)</code></pre>
+<ul><li><code>x_t</code>: 현재 타임스텝 입력 (임베딩 벡터)</li><li><code>h_{t-1}</code>: 직전 hidden state</li><li><code>W_xh</code>: 입력 가중치</li><li><code>W_hh</code>: 순환 가중치</li><li><code>tanh</code>: (-1, 1)로 squash</li></ul>
+<p>예측은 시퀀스 전체를 처리한 뒤 마지막 hidden state <code>h_T</code>에서 출력 헤드를 통해 생성된다:</p>
+<pre><code>pitch_logits  = W_pitch  · h_T + b_pitch   # (129 클래스)
+dur_logits    = W_dur    · h_T + b_dur     # (동적 vocab)</code></pre>
+<hr />
+<h1>아키텍처 구성</h1>
+<pre><code>입력 피처 (7개 카테고리) → 임베딩 → Concat
+                                       ↓
+                              RNN (seq_len 타임스텝)
+                                       ↓
+                              마지막 hidden state h_T
+                             ↙                    ↘
+                   Pitch Head                 Duration Head
+                  (129 classes)               (dynamic vocab)</code></pre>
+<p>임베딩 구성:</p>
+<div class="markdown-table-wrap"><table><thead><tr><th>피처</th><th>vocab</th><th>embed dim</th></tr></thead><tbody><tr><td>pitch</td><td>129</td><td>32</td></tr><tr><td>rel_pitch</td><td>13</td><td>8</td></tr><tr><td>duration</td><td>dynamic</td><td>8</td></tr><tr><td>prev_interval</td><td>25</td><td>8</td></tr><tr><td>chord_root</td><td>13</td><td>8</td></tr><tr><td>chord_quality</td><td>7</td><td>4</td></tr><tr><td>metric_pos</td><td>48</td><td>8</td></tr><tr><td><strong>합계</strong></td><td></td><td><strong>76</strong></td></tr></tbody></table></div>
+<hr />
+<h2>NumPy 구현: BPTT 직접 유도</h2>
+<p>PyTorch를 쓰면 <code>loss.backward()</code> 한 줄로 끝나지만, 그러면 실제로 무슨 일이 일어나는지 모른다. NumPy로 역전파를 직접 구현하면 각 단계의 gradient flow를 체감할 수 있다.</p>
+<h3>Forward (RNNCell)</h3>
+<pre><code>def forward(self, x_t, h_prev):
+    z_t = x_t @ self.W_xh.T + h_prev @ self.W_hh.T + self.b_H
+    h_t = tanh(z_t)
+    self.cache = {&#39;x_t&quot;: x_t, &quot;h_prev&#39;: h_prev, &#39;z_t&#39;: z_t, &#39;h_t&#39;: h_t}
+    return h_t</code></pre>
+<h3>Backward (단일 타임스텝) - <code>src/RNN_numpy/layers/rnn.py:82</code></h3>
+<pre><code>h_t = tanh(z_t)  이므로
+∂L/∂z_t = ∂L/∂h_t ⊙ (1 - h_t²)      ← tanh 미분
+∂L/∂W_xh = (∂L/∂z_t)ᵀ · x_t
+∂L/∂W_hh = (∂L/∂z_t)ᵀ · h_{t-1}
+∂L/∂h_{t-1} = ∂L/∂z_t · W_hh         ← 다음 타임스텝으로 전달</code></pre>
+<p>코드:</p>
+<pre><code>def backward(self, grad_h_t):
+    h_t = self.cache[&#39;h_t&#39;]
+    x_t = self.cache[&#39;x_t&#39;]
+    h_prev = self.cache[&#39;h_prev&#39;]
+
+    grad_z_t = grad_h_t * (1 - h_t ** 2)    # tanh 미분
+
+    self.grad_W_xh = grad_z_t.T @ x_t
+    self.grad_W_hh = grad_z_t.T @ h_prev
+    self.gard_b_h  = grad_z_t.sum(axis=0)
+
+    grad_x_t    = grad_z_t @ self.W_xh      # 임베딩으로 전달
+    grad_h_prev = grad_z_t @ self.W_hh      # 이전 타임스텝으로 전달
+    return grad_x_t, grad_h_prev</code></pre>
+<h3>BPTT: 시퀀스 역방향 루프 — <code>src/RNN_numpy/layers/rnn.py:213–216</code></h3>
+<pre><code>def backward(self, grad_h_seq):
+    # grad_h_seq: (batch, seq_len, hidden_size)
+    # 마지막 타임스텝부터 역방향으로
+    grad_h_t = np.zeros_like(grad_h_seq[:, 0, :])
+
+    for t  in reversed(range(seq_len)):
+        grad_h_t += grad_h_seq[:, t, :]     # 현재 timestep gradient 합산
+        grad_x_t, grad_h_t = self.cell.backward(grad_h_t)
+        grad_x_seq.insert(0, grad_x_t)
+
+    return np.stack(grad_x_seq, axis=1)</code></pre>
+<h3>가장 어려웠던 부분: gradient</h3>
+<p>구현에서 가장 까다로웠던 것은 수식 유도 자체보다는 타임스텝별 gradient 합산의 회계 처리였다. 각 타임스텝 t의 hidden state <code>h_t</code>는 두 곳에서 gradient를 받는다.</p>
+<ol><li>해당 시점의 출력 loss에서 직접 내려오는 gradient: <code>grad_h_seq[:, t, :]</code></li><li>미래 타임스텝에서 역전파되어 온 gradient: 직전 루프의 <code>cell.backward</code>가 변환한 <code>grad_h_t</code></li></ol>
+<p><code>grad_h_t += grad_h_seq[:, t, :]</code> (<code>rnn.py:215</code>)의 <code>+=</code>가 위 두 경로의 합산이다. 이 한 줄의 위치를 잘못 잡으면 수렴은 하지만 틀린 gradient로 수렴하는 버그가 발생한다. 학습은 되는데 성능만 미묘하게 나쁜, 불친절하고 잡기 어려운 종류의 버그가 된다.</p>
+<p>그래서 검증 장치가 필요하다.</p>
+<hr />
+<h2>Gradient 검증: 수치 미분</h2>
+<ul><li><code>src/RNN_numpy/tests/test_rnn.py:18–56</code>.</li></ul>
+<p>직접 유도한 analytical gradient가 맞는지 어떻게 확신할 수 있을까. 이 프로젝트에서는 수치 미분(numerical gradient check)을 테스트 코드로 작성했다.</p>
+<p>원리는 central difference이다. 파라미터의 각 원소를 ±ε(1e-5)만큼 흔들어</p>
+<pre><code>numerical_grad = (L(θ + ε) − L(θ − ε)) / 2ε</code></pre>
+<p>를 계산하고, backward가 산출한 analytical gradient와 상대 오차를 비교한다. (<code>test_rnn.py:164, 199</code>)</p>
+<pre><code>rel_error = np.abs(analytical - numerical) / (np.abs(analytical) + np.abs(numerical) + 1e-8)</code></pre>
+<p>분모에 두 gradient의 절대값 합을 사용하여 gradient크기가 0에 가까운 원소에서 절대 오차만 보면 통과하고 상대 오차만 보면 폭발하는 양극단을 피한다.</p>
+<p>수치 미분은 파라미터 원소 하나마다 forward를 두 번 돌리므로 매우 느리다. 그래서 작은 텐서에서 레이어 단위로만 수정하였고, 모델 전체는 &quot;loss가 수렴하는가 + 생성 결과가 합리적인가&quot;로 간접 검증했다.</p>
+<ul><li>한계점: cross-check를 수행하지 않았다. Numpy 구현과 PyTorch 구현의 수치적 동등성 증명을 위해서는 동일 가중치를 NumPy 레이어와 PyTorch 레이어에 복사해 넣고 forward/backward 출력을 직접 대조하는 cross-check 단계가 필요하다. 수치 미분으로 1차 검증을 하였지만, 두 구현의 수치적 동등성과 대칭성 문제가 남는다.</li></ul>
+<hr />
+<h2>PyTorch 구현과의 차이</h2>
+<p>PyTorch 버전에서 초기화 방식을 보자. <code>src/RNN_pytorch/model.py:86–88</code></p>
+<pre><code>def _init_weights(self):
+    for name, param in self.named_parameters():
+        if &#39;weight_ih&#39; in name:
+            nn.init.xavier_uniform_(param)
+        elif &#39;weight_hh&#39; in name:
+            nn.init.orthogonal_(param)</code></pre>
+<p>순환 가중치 <code>W_hh</code>에 직교 초기화(Orthogonal Initialization)를 쓰는 이유: 직교 행렬은 벡터의 크기(norm)를 보존하기 때문에 <code>h_t</code>에 <code>W_hh</code>를 반복 곱하더라도 gradient가 폭발하거나 소실되지 않는다. Vanishing gradient 문제를 초기화 수중에서 일부 완화하는 기법이다.</p>
+<h3>학습 안정화 정리</h3>
+<ul><li>Gradient clipping은 예방적으로 걸어두었다. <code>clip_grad_norm_(max_norm=1.0)</code> (<code>src/RNN_pytorch/trainer.py:68</code>). 학습 중 gradient exploding이 실제로 관측된 적은 없다. 문제가 발생해서 넣은 대응책이 아닌 표준적 예방 조치다.</li><li>Numpy 구현에는 clipping이 없다. Numpy 버전은 역전파 메커니즘 이해가 목적인 최소 구현이기 때문에 의도적으로 제외했다.</li><li>실제로 마주한 문제는 vanishing 쪽이었고, 초기화로 완화를 시도하되 근본적으로는 구조적 해결로 넘어간다.(다음 편의 LSTM 구현)</li></ul>
+<hr />
+<h2>Vanilla RNN의 한계: Vanishing Gradient</h2>
+<p>BPTT를 T 타임스텝 역방향으로 수행할 때, gradient는 각 타임스텝마다 <code>W_hh</code>를 한 번씩 곱해 전달된다.</p>
+<pre><code>∂L/∂h_0 ∝ (W_hh)^T · ∂L/∂h_T</code></pre>
+<p><code>W_hh</code>의 최대 singular value가 1보다 작으면 T가 커질수록 gradient가 기하급수적으로 줄어든다. 게다가 스텝 tanh의 미분 <code>(1 - h_t²) ≤ 1</code>이 추가로 곱해진다. 이 누적 곱은 고정된 행렬과 활성함수 미분의 반복이기 때문에 건너뛸 수 없다. 구조 자체의 한계다.</p>
+<p>재즈 솔로에서 모티프(motif)는 중요한 음악적 요소로, 이전에 연주된 패턴을 이후 구간에서 변형하거나 재사용하는 특징을 가진다. Vanilla RNN은 이러한 장기 의존성을 포착하는 데 한계가 있다.</p>
+<p>이 문제를 해결하기 위해 다음 편에서 LSTM을 도입한다.</p>
+<hr />
+<h2>회고</h2>
+<p><strong>배운 것</strong></p>
+<p>BPTT를 직접 구현하며 gradient flow의 물리적 의미를 이해하게 됐다. 구현한 코드가 맞다는 것을 수치 미분으로 검증하는 습관이 NumPy 구현에서 얻은 가장 실용적인 수확이다.</p>
+<p><strong>아쉬운 점</strong></p>
+<p>RNN_numpy와 RNN_pytorch의 임베딩 피처 수가 다르다. 초기 구현에서 <code>chord_root_rel</code>, <code>next_chord_*</code> 등의 피처를 포함했는데, 이후 실험에서 7개로 정리했다. 두 구현의 비대칭성, 그리고 둘 사이의 수치적 동등성을 cross-check하지 않은 것이 아쉬움으로 남는다.</p>
+<p><strong>다음 편 예고</strong></p>
+<p>LSTM은 4개의 게이트를 도입해 무엇을 기억하고, 무엇을 지울지를 명시적으로 학습한다. gradient가 과거로 이동할 때 곱해지는 인자가 무엇으로 바뀌는지가 핵심이다. NumPy로 4개 게이트의 역전파를 유도하며 그 차이를 확인한다.</p>
+<hr />
+<p><em>다음: [2편] LSTM — 게이팅 메커니즘과 장기 의존성</em></p>
+        </div>
+        <nav class="post-nav" aria-label="Post navigation">
+          <a href="index.html">All posts</a>
+          <a href="../index.html#writing">Back to home</a>
+        </nav>
+      </article>
+    </main>
+  </body>
+</html>

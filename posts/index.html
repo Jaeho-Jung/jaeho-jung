@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Writing series for Jazz Is a Language, Jaeho Jung's chord-conditioned symbolic jazz generation project."
+    />
+    <title>Jazz Is a Language — Writing Series</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/media.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="wrap header-wrap">
+        <a href="../index.html#home" class="logo">Jaeho Jung</a>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="../index.html#about" class="nav-link">About</a>
+          <a href="../index.html#projects" class="nav-link">Research</a>
+          <a href="../index.html#writing" class="nav-link active">Writing</a>
+          <a href="../index.html#performance" class="nav-link">Performance</a>
+          <a href="../index.html#contact" class="nav-link">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="writing">
+        <div class="wrap">
+          <p class="section-label">Writing</p>
+          <h1 class="title">Jazz Is a Language</h1>
+          <p class="series-sub">
+            A project series on chord-conditioned symbolic jazz generation,
+            moving from a from-scratch RNN to a Music Transformer variant.
+          </p>
+
+          <div class="writing-list">
+            <article class="writing-item">
+              <span class="writing-date">Part 0</span>
+              <div>
+                <h2 class="writing-title">
+                  <a href="00_intro.html">Jazz Is a Language — 재즈는 언어다</a>
+                </h2>
+                <p class="writing-excerpt">
+                  Why jazz improvisation can be treated as a sequence modeling
+                  problem.
+                </p>
+              </div>
+            </article>
+
+            <article class="writing-item">
+              <span class="writing-date">Part 1</span>
+              <div>
+                <h2 class="writing-title">
+                  <a href="01_rnn.html">Generating jazz solos with an RNN</a>
+                </h2>
+                <p class="writing-excerpt">
+                  A NumPy RNN implementation on a 7-feature representation.
+                </p>
+              </div>
+            </article>
+
+            <article class="writing-item">
+              <span class="writing-date">Part 2</span>
+              <div>
+                <h2 class="writing-title">
+                  <a href="02_lstm.html"
+                    >LSTM — gating and long-range dependency</a
+                  >
+                </h2>
+                <p class="writing-excerpt">
+                  A hand-derived look at gates, gradients, and sequence memory.
+                </p>
+              </div>
+            </article>
+
+            <article class="writing-item">
+              <span class="writing-date">Part 3</span>
+              <div>
+                <h2 class="writing-title">
+                  <a href="03_transformer.html">Transformer — self-attention</a>
+                </h2>
+                <p class="writing-excerpt">
+                  A decoder-only Transformer implementation compared with RNN
+                  and LSTM baselines.
+                </p>
+              </div>
+            </article>
+
+            <article class="writing-item">
+              <span class="writing-date">Part 4</span>
+              <div>
+                <h2 class="writing-title">
+                  <a href="04_music_transformer.html">Music Transformer</a>
+                </h2>
+                <p class="writing-excerpt">
+                  Modified REMI, relative self-attention, and the Skew
+                  algorithm for symbolic music.
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <div class="text-links">
+            <a href="../index.html#writing">Back to home</a>
+            <a href="https://github.com/Jaeho-Jung/Jazz-Is-a-Language"
+              >Project repository</a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

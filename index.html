@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Jaeho Jung studies and builds AI systems that connect models, interaction, and creative tools, with a current focus on controllable music generation."
+    />
+    <title>Jaeho Jung</title>
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/media.css" />
+  </head>
+
+  <body class="site">
+    <div class="layout">
+      <aside class="rail">
+        <a href="#home" class="logo">Jaeho Jung</a>
+
+        <figure class="rail-photo">
+          <img src="img/hero/IMG_9250.JPG" alt="Portrait of Jaeho Jung" />
+        </figure>
+
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="#about" class="nav-link">About</a>
+          <a href="#projects" class="nav-link">AI Work</a>
+          <a href="#engineering" class="nav-link">Engineering</a>
+          <a href="#writing" class="nav-link">Writing</a>
+          <a href="#performance" class="nav-link">Performance</a>
+          <a href="#contact" class="nav-link">Contact</a>
+        </nav>
+
+        <p class="rail-meta">
+          B.S. Computer Engineering<br />
+          Jeonbuk National University
+        </p>
+        <div class="rail-links">
+          <a href="https://github.com/Jaeho-Jung">GitHub</a>
+          <a href="https://www.youtube.com/@JaehoJung">YouTube</a>
+        </div>
+      </aside>
+
+      <div class="content">
+    <main>
+      <!-- HERO: single confident column — meta/nav now live in the rail -->
+      <section id="home" class="hero">
+        <div class="wrap">
+          <p class="eyebrow">Controllable music generation</p>
+          <h1 class="thesis">
+            Building AI systems for music, interaction, and creative tools
+          </h1>
+          <p class="hero-sub">
+            I study and build AI systems that connect models, interaction, and
+            creative tools. My current focus is controllable music generation,
+            especially symbolic jazz generation and musical structure. This
+            work is grounded in ten years of guitar playing, three years of
+            serious jazz study, and hands-on experience with speech
+            interaction, APIs, and applied AI systems.
+          </p>
+          <div class="text-links">
+            <a href="#projects">Selected AI work</a>
+            <a href="#engineering">Engineering work</a>
+            <a href="#writing">Research notes</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature waveform: used exactly once -->
+      <svg class="waveform" viewBox="0 0 600 20" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,10 L40,10 L48,3 L56,17 L64,10 L120,10 L128,4 L136,16 L144,10 L220,10" />
+        <path class="accent-tick" d="M220,10 L240,10 L248,2 L256,18 L264,10 L300,10" />
+        <path d="M300,10 L380,10 L388,5 L396,15 L404,10 L470,10 L478,3 L486,17 L494,10 L600,10" />
+      </svg>
+
+      <section id="about" class="about">
+        <div class="wrap">
+          <p class="section-label">About</p>
+          <div class="prose">
+            <p>
+              I graduated with a B.S. in Computer Engineering from Jeonbuk
+              National University. My primary research interest is controllable
+              symbolic music generation: how models can respond to harmonic
+              and structural constraints without losing musicality.
+            </p>
+            <p>
+              I have implemented and compared RNN, LSTM, and Transformer
+              architectures for jazz solo generation from scratch, and I am
+              currently working on a Music Transformer variant that combines
+              Jazz Transformer's representation with relative self-attention.
+              I write about this process in an ongoing series,
+              <em>Jazz Is a Language</em>.
+            </p>
+            <p>
+              I also care about turning models into usable systems. Through
+              LetsPlay and smaller product experiments, I have worked across
+              model exploration, API design, deployment tradeoffs, and mobile
+              or web prototypes. I want this site to reflect both sides:
+              research curiosity and the ability to build working AI products.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="projects" class="projects">
+        <div class="wrap">
+          <p class="section-label">Selected AI Work</p>
+          <h2 class="title">Music AI research and applied AI systems</h2>
+          <p class="series-sub">
+            These are the projects I would most want a professor or hiring
+            team to see first. Jazz Is a Language shows my research direction
+            and model-building practice; LetsPlay shows applied AI engineering,
+            API work, deployment decisions, and team leadership.
+          </p>
+
+          <div class="entry-list">
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">Jazz Is a Language</h3>
+                <span class="entry-meta">2025 — ongoing</span>
+              </div>
+              <p class="entry-body">
+                A symbolic jazz generation project on chord-conditioned
+                improvisation: RNN, LSTM, and Transformer implementations
+                built from scratch in NumPy, then ported to PyTorch for
+                training on the Weimar Jazz Database. Current work extends
+                this with a Music Transformer variant combining Jazz
+                Transformer's Modified REMI tokenization (Wu &amp; Yang, 2020)
+                with relative self-attention. For hiring teams, this project
+                also demonstrates sequence modeling, PyTorch implementation,
+                model comparison, and technical writing.
+              </p>
+              <div class="entry-links">
+                <a href="https://github.com/Jaeho-Jung/Jazz-Is-a-Language"
+                  >Jazz-Is-a-Language →</a
+                >
+                <a href="https://github.com/Jaeho-Jung/MusicTransformer-Pytorch"
+                  >MusicTransformer-Pytorch →</a
+                >
+                <a href="#writing">Writing series →</a>
+              </div>
+            </article>
+
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">LetsPlay</h3>
+                <span class="entry-meta">Applied AI, team lead</span>
+              </div>
+              <p class="entry-body">
+                A speech-interaction system letting children role-play with an
+                AI voice agent in real time. I led AI research and API
+                development, including speech-model fine-tuning, API design,
+                deployment tradeoffs, and project direction with a partner
+                company. It is not my main music-generation project, but it
+                shows how I approach applied AI systems outside the symbolic
+                music domain: from research exploration to a working backend
+                service for a real product context.
+              </p>
+              <div class="entry-links">
+                <a href="https://github.com/Jaeho-Jung/LetsPlay-ai-research"
+                  >AI research →</a
+                >
+                <a href="https://github.com/Jaeho-Jung/LetsPlay-server"
+                  >Server →</a
+                >
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="engineering" class="engineering">
+        <div class="wrap">
+          <p class="section-label">Engineering</p>
+          <h2 class="title">Building AI systems beyond experiments</h2>
+          <p class="series-sub">
+            My engineering work is strongest when it connects model behavior,
+            product constraints, and a working interface. I am interested in AI
+            engineering roles where research literacy, backend/API work, and
+            fast prototyping are all useful.
+          </p>
+
+          <div class="entry-list">
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">AI system prototyping</h3>
+                <span class="entry-meta">Speech, music, inference</span>
+              </div>
+              <p class="entry-body">
+                Experience moving from model investigation to usable software:
+                testing architectures, designing API boundaries, evaluating
+                deployment options, and adapting when local inference or mobile
+                constraints change the plan.
+              </p>
+            </article>
+
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">Selected product experiments</h3>
+                <span class="entry-meta">Web and mobile</span>
+              </div>
+              <p class="entry-body">
+                Side projects include Momette, a short-clip capturing camera
+                app; Morning Log, a private vehicle and parking management app;
+                and TetoEgenTest, a web-based AI/personality quiz experiment.
+                These are secondary to my music AI work, but they show my habit
+                of making ideas concrete through working software. The
+                repositories are private, but I can share demos or details upon
+                request.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="writing" class="writing">
+        <div class="wrap">
+          <p class="section-label">Writing — Notes on Music Generation</p>
+          <h2 class="title">Jazz Is a Language</h2>
+          <p class="series-sub">
+            A series documenting the same project as
+            <a href="#projects">Research</a> above: from a from-scratch RNN to
+            a Music Transformer variant for chord-conditioned generation.
+          </p>
+          <div class="writing-list">
+            <article class="writing-item">
+              <span class="writing-date">Part 0</span>
+              <div>
+                <h3 class="writing-title">
+                  <a href="posts/00_intro.html"
+                    >Jazz Is a Language — 재즈는 언어다</a
+                  >
+                </h3>
+                <p class="writing-excerpt">
+                  Why treat jazz improvisation as a modeling problem rather
+                  than only a software implementation problem.
+                </p>
+              </div>
+            </article>
+            <article class="writing-item">
+              <span class="writing-date">Part 1</span>
+              <div>
+                <h3 class="writing-title">
+                  <a href="posts/01_rnn.html"
+                    >Generating jazz solos with an RNN</a
+                  >
+                </h3>
+                <p class="writing-excerpt">
+                  A from-scratch NumPy implementation on a 7-feature
+                  representation, compared against a PyTorch baseline.
+                </p>
+              </div>
+            </article>
+            <article class="writing-item">
+              <span class="writing-date">Part 2</span>
+              <div>
+                <h3 class="writing-title">
+                  <a href="posts/02_lstm.html"
+                    >LSTM — gating and long-range dependency</a
+                  >
+                </h3>
+                <p class="writing-excerpt">
+                  Deriving backpropagation through four gates by hand to see
+                  why gating addresses the vanishing gradient.
+                </p>
+              </div>
+            </article>
+            <article class="writing-item">
+              <span class="writing-date">Part 3</span>
+              <div>
+                <h3 class="writing-title">
+                  <a href="posts/03_transformer.html"
+                    >Transformer — self-attention</a
+                  >
+                </h3>
+                <p class="writing-excerpt">
+                  Implementing a GPT-style decoder-only Transformer and
+                  comparing its structure with RNN and LSTM baselines.
+                </p>
+              </div>
+            </article>
+            <article class="writing-item">
+              <span class="writing-date">Part 4</span>
+              <div>
+                <h3 class="writing-title">
+                  <a href="posts/04_music_transformer.html">Music Transformer</a>
+                </h3>
+                <p class="writing-excerpt">
+                  Combining Jazz Transformer's Modified REMI representation
+                  (Wu &amp; Yang, 2020) with relative self-attention, including
+                  a walkthrough of the Skew algorithm.
+                </p>
+              </div>
+            </article>
+          </div>
+          <div class="text-links">
+            <a href="posts/index.html">View all posts</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="performance" class="performance">
+        <div class="wrap">
+          <p class="section-label">Performance</p>
+          <p class="performance-note">
+            I have played guitar since 2014 and started studying jazz
+            seriously three years ago. Improvisation practice is where many of
+            the questions behind my research come from.
+          </p>
+          <div class="performance-links">
+            <a href="https://www.youtube.com/watch?v=mQAPH1tGrxI"
+              >Days of Wine and Roses (jazz standard) →</a
+            >
+            <a href="https://www.youtube.com/shorts/pHMalS-moms"
+              >Make a Change — Ole Børud (Guitar Solo Cover) →</a
+            >
+            <a href="https://www.youtube.com/@JaehoJung">YouTube channel →</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="contact">
+        <div class="wrap">
+          <p class="section-label">Contact</p>
+          <p class="contact-copy">
+            For research discussion, applied AI work, or engineering roles:
+          </p>
+          <p>
+            <a class="contact-email" href="mailto:jaeho.builds@gmail.com"
+              >jaeho.builds@gmail.com</a
+            >
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="wrap footer">
+      <span>© Jaeho Jung, 2026</span>
+      <span>Last updated 2026</span>
+    </footer>
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

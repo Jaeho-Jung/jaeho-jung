@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Case study: TetoEgen, a multi-vertical consumer AI product system spanning face analysis, animal-face classification, hairstyle recommendation, and attachment-style assessment."
+    />
+    <title>TetoEgen Case Study — Jaeho Jung</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/media.css" />
+  </head>
+  <body class="site">
+    <header class="header">
+      <div class="wrap header-wrap">
+        <a href="../index.html#home" class="logo">Jaeho Jung</a>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="../index.html#about" class="nav-link">About</a>
+          <a href="../index.html#projects" class="nav-link">AI Work</a>
+          <a href="../index.html#engineering" class="nav-link active">Engineering</a>
+          <a href="../index.html#writing" class="nav-link">Writing</a>
+          <a href="../index.html#performance" class="nav-link">Performance</a>
+          <a href="../index.html#contact" class="nav-link">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <article class="post-page wrap">
+        <div class="post-kicker">Case Study · Consumer AI Product System</div>
+        <div class="post-content">
+          <h1>TetoEgen — Building a Multi-Vertical Product Around Explicit Evidence</h1>
+
+          <blockquote>
+            <p>
+              A consumer product family spanning a Teto/Egen face test, an
+              animal-face classifier, geometry-driven hairstyle recommendation,
+              and an attachment-style questionnaire. The engineering problem was
+              not to put the same AI behind every page, but to choose the right
+              inference mechanism for each product and make its evidence boundary explicit.
+            </p>
+          </blockquote>
+
+          <p>
+            TetoEgen began as a face-based consumer test and grew into four
+            different product verticals sharing a common web product shell.
+            From the outside, each experience looks similar: the user provides
+            information and receives a personalized result. Underneath, however,
+            the reasoning requirements are different.
+          </p>
+
+          <div class="markdown-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vertical</th>
+                  <th>Primary decision mechanism</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Teto / Egen face test</td>
+                  <td>Face-image analysis and product-specific scoring</td>
+                </tr>
+                <tr>
+                  <td>Animal-face test</td>
+                  <td>Image classification with a reviewed training dataset</td>
+                </tr>
+                <tr>
+                  <td>Hairstyle recommendation</td>
+                  <td>Continuous facial geometry + explicit recommendation rules</td>
+                </tr>
+                <tr>
+                  <td>Attachment-style test</td>
+                  <td>Deterministic questionnaire scoring, not an AI prediction</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Keeping these mechanisms distinct was deliberate. A superficially
+            similar UX does not imply that the same model or the same evidence
+            standard is appropriate for every problem.
+          </p>
+
+          <h2>1. Replacing categorical hairstyle logic with measurable geometry</h2>
+
+          <p>
+            A simple hairstyle recommender can map a label such as “round face”
+            or “oblong face” to a fixed list of styles. I wanted the recommendation
+            engine to depend less on a single categorical label and more on the
+            measurements that produced that label.
+          </p>
+
+          <p>The face-analysis pipeline derives signals including:</p>
+          <ul>
+            <li>face elongation and width relationships,</li>
+            <li>forehead, cheek and jaw proportions,</li>
+            <li>upper / middle / lower facial thirds,</li>
+            <li>jaw taper and angularity,</li>
+            <li>symmetry deviation,</li>
+            <li>vertical and horizontal emphasis.</li>
+          </ul>
+
+          <p>
+            Before those measurements are trusted, the system evaluates pose
+            quality. Roll can be normalized, while excessive yaw or pitch lowers
+            confidence or causes the image to be rejected. Jaw geometry is also
+            derived from contour segments rather than represented by one landmark:
+            the implementation fits contour lines, evaluates candidate jaw corners,
+            and measures how strongly the contour changes direction.
+          </p>
+
+          <p>
+            Those continuous features are translated into a target hairstyle
+            geometry. The engine can, for example, reduce excessive crown height,
+            increase horizontal flow, alter fringe coverage according to upper-face
+            proportion, or add softer movement when the jaw is strongly angular.
+            User intent — natural, soft, structured, or expressive — modifies the
+            same target rather than being applied only as a cosmetic filter afterward.
+          </p>
+
+          <p>
+            The recommendation rules are versioned and the engine records which
+            rules were activated. The display label remains useful to explain the
+            result to a user, but it is not the primary selector of hairstyle families.
+          </p>
+
+          <blockquote>
+            <p>
+              Design principle: preserve the readable label for UX, but let the
+              recommendation depend on the underlying measurements that can be
+              inspected, calibrated, and tested independently.
+            </p>
+          </blockquote>
+
+          <h2>2. Treating the ML dataset as part of the product</h2>
+
+          <p>
+            For the animal-face classifier, the main risk was not whether a model
+            could produce a probability vector. It was whether the dataset and
+            evaluation setup made those probabilities meaningful.
+          </p>
+
+          <p>I built a separate local collection and review workflow that:</p>
+          <ol>
+            <li>discovers candidate images and supporting sources,</li>
+            <li>detects and crops the face using the same assumptions as the product,</li>
+            <li>requires explicit human acceptance or rejection,</li>
+            <li>records source and transformation lineage in a manifest,</li>
+            <li>keeps train, validation and test splits separate by identity,</li>
+            <li>balances classes without modifying the reviewed originals.</li>
+          </ol>
+
+          <p>
+            The identity-level split is important. If different photos of the same
+            celebrity appear in both training and validation data, a strong metric
+            may measure person recognition instead of generalization of the intended
+            visual category.
+          </p>
+
+          <p>
+            The collector also rejects crops that would require artificial padding
+            or excessive upscaling. It records whether a fallback thumbnail was used,
+            and every collected record remains marked for rights review rather than
+            treating public discoverability as permission to train or redistribute.
+          </p>
+
+          <h2>3. Designing explicit failure boundaries</h2>
+
+          <p>
+            Consumer AI products can appear successful when the happy path works once.
+            I treated failure boundaries as part of the product contract instead.
+          </p>
+
+          <ul>
+            <li>input quality is checked before face-derived measurements are trusted,</li>
+            <li>multiple-face and low-quality inputs receive explicit failure states,</li>
+            <li>model metadata and runtime output shape are treated as a contract,</li>
+            <li>recommendation rules expose why a result was produced,</li>
+            <li>analytics are isolated so telemetry failure cannot block the user flow.</li>
+          </ul>
+
+          <p>
+            I also kept high-sensitivity user inputs out of normal funnel telemetry.
+            The goal was to collect enough evidence to understand whether the product
+            worked without confusing observability with indiscriminate data collection.
+          </p>
+
+          <h2>4. What this project changed in how I review AI MVPs</h2>
+
+          <p>
+            The most useful outcome was a repeatable review frame that goes beyond
+            asking whether an AI feature can produce a convincing demo:
+          </p>
+
+          <ol>
+            <li><strong>Claim:</strong> What exactly does the product say it can do?</li>
+            <li><strong>Mechanism:</strong> What actually produces the result?</li>
+            <li><strong>Evidence:</strong> What test would distinguish real capability from a convincing happy path?</li>
+            <li><strong>Failure boundary:</strong> When should the system lower confidence, reject input, or expose uncertainty?</li>
+            <li><strong>Decision:</strong> Which issue blocks release, and which one is merely technical debt?</li>
+          </ol>
+
+          <h2>What I would evaluate differently now</h2>
+
+          <p>
+            The project also makes several limitations clear. If I were running the
+            evaluation from the beginning again, I would define product-specific
+            success criteria before adding more features.
+          </p>
+
+          <ul>
+            <li>
+              <strong>Hairstyle:</strong> calibrate geometric thresholds and rule
+              strengths against a labeled reference set instead of allowing hand-tuned
+              rules to accumulate faster than evidence.
+            </li>
+            <li>
+              <strong>Animal-face:</strong> maintain a fixed, identity-disjoint offline
+              evaluation set and report per-class precision / recall and confusion matrices
+              before interpreting model confidence as product quality.
+            </li>
+            <li>
+              <strong>Consumer perception:</strong> separate entertainment value,
+              perceived plausibility, and predictive correctness as different metrics.
+            </li>
+            <li>
+              <strong>Cross-vertical product decisions:</strong> require each new vertical
+              to justify its own inference method and measurement plan instead of inheriting
+              the evaluation assumptions of the original product.
+            </li>
+          </ul>
+
+          <h2>Outcome</h2>
+
+          <p>
+            TetoEgen became a deployed multi-vertical consumer product rather than a
+            single model demo. The project spans computer-vision preprocessing,
+            reviewed ML data collection, explainable recommendation logic, typed product
+            analytics, and production web engineering.
+          </p>
+
+          <p>
+            More importantly, it gave me a practical distinction I now use when reviewing
+            early AI products: <strong>a feature that generates an output is not the same
+            thing as a feature whose claim is supported by evidence.</strong>
+          </p>
+
+          <p>
+            <strong>Stack:</strong> Next.js, TypeScript, TensorFlow.js, MediaPipe,
+            face-api.js, Playwright, GA4, Cloudflare Pages
+          </p>
+
+          <p>
+            <strong>Production:</strong>
+            <a href="https://tetoegen.kr" target="_blank" rel="noreferrer">tetoegen.kr</a><br />
+            <strong>Source:</strong> Private repository
+          </p>
+
+          <nav class="post-nav" aria-label="Case study navigation">
+            <a href="../index.html#engineering">← Engineering</a>
+            <a href="infant-speech-asr.html">Infant Speech ASR case study →</a>
+          </nav>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>

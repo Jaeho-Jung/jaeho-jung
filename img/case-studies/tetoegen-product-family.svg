@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+<title id="title">TetoEgen product family and inference mechanisms</title>
+<desc id="desc">Four product verticals share one product shell but use distinct reasoning mechanisms.</desc>
+<rect width="1200" height="680" fill="#f7f5f0"/>
+<style>
+  .h{font:600 32px Georgia,serif;fill:#1c1916}.s{font:400 18px Georgia,serif;fill:#4a473f}.k{font:500 14px monospace;fill:#6b2a2a;letter-spacing:.04em}.t{font:600 22px Georgia,serif;fill:#1c1916}.b{font:400 16px Georgia,serif;fill:#4a473f}.m{font:500 13px monospace;fill:#6b6759}.box{fill:#eee8da;stroke:#d3c9b3;stroke-width:1.5}.core{fill:#efe1df;stroke:#6b2a2a;stroke-width:1.5}.line{stroke:#74582f;stroke-width:2;fill:none}.dot{fill:#74582f}
+</style>
+<text x="60" y="72" class="k">SYSTEM VIEW</text><text x="60" y="112" class="h">One product family, four evidence models</text><text x="60" y="146" class="s">A similar consumer UX does not imply a shared inference mechanism.</text>
+<rect x="420" y="270" rx="12" ry="12" width="360" height="128" class="core"/><text x="600" y="314" text-anchor="middle" class="t">Shared product shell</text><text x="600" y="344" text-anchor="middle" class="b">upload / questionnaire · result UX · sharing</text><text x="600" y="370" text-anchor="middle" class="b">analytics · deployment · failure states</text>
+<path d="M420 315 C350 315 330 235 295 220" class="line"/><path d="M780 315 C850 315 870 235 905 220" class="line"/><path d="M420 355 C350 355 330 470 295 490" class="line"/><path d="M780 355 C850 355 870 470 905 490" class="line"/>
+<circle cx="420" cy="315" r="4" class="dot"/><circle cx="780" cy="315" r="4" class="dot"/><circle cx="420" cy="355" r="4" class="dot"/><circle cx="780" cy="355" r="4" class="dot"/>
+<rect x="55" y="175" rx="10" width="300" height="150" class="box"/><text x="80" y="210" class="m">01 · FACE TEST</text><text x="80" y="244" class="t">Teto / Egen</text><text x="80" y="275" class="b">Face-image analysis</text><text x="80" y="300" class="b">+ product-specific scoring</text>
+<rect x="845" y="175" rx="10" width="300" height="150" class="box"/><text x="870" y="210" class="m">02 · IMAGE CLASSIFIER</text><text x="870" y="244" class="t">Animal face</text><text x="870" y="275" class="b">Reviewed training dataset</text><text x="870" y="300" class="b">+ identity-disjoint evaluation</text>
+<rect x="55" y="455" rx="10" width="300" height="150" class="box"/><text x="80" y="490" class="m">03 · RECOMMENDATION</text><text x="80" y="524" class="t">Hairstyle</text><text x="80" y="555" class="b">Continuous facial geometry</text><text x="80" y="580" class="b">+ versioned explainable rules</text>
+<rect x="845" y="455" rx="10" width="300" height="150" class="box"/><text x="870" y="490" class="m">04 · QUESTIONNAIRE</text><text x="870" y="524" class="t">Attachment style</text><text x="870" y="555" class="b">Deterministic scoring</text><text x="870" y="580" class="b">No AI claim required</text>
+<text x="600" y="642" text-anchor="middle" class="m">DESIGN RULE · choose the mechanism first; inherit only the product shell</text>
+</svg>

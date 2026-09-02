@@ -1,0 +1,42 @@
+.evidence-figure {
+  margin: var(--space-4) 0;
+}
+
+.evidence-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.evidence-figure figcaption {
+  max-width: 42rem;
+  margin-top: 0.7rem;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.evidence-figure figcaption strong {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+@media (min-width: 900px) {
+  .post-page:has(.evidence-figure) {
+    max-width: 58rem;
+  }
+
+  .post-page:has(.evidence-figure) .post-content > p,
+  .post-page:has(.evidence-figure) .post-content > ul,
+  .post-page:has(.evidence-figure) .post-content > ol,
+  .post-page:has(.evidence-figure) .post-content > blockquote,
+  .post-page:has(.evidence-figure) .post-content > h1,
+  .post-page:has(.evidence-figure) .post-content > h2,
+  .post-page:has(.evidence-figure) .post-content > h3,
+  .post-page:has(.evidence-figure) .post-content > .markdown-table-wrap {
+    max-width: 44rem;
+  }
+}

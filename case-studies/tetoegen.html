@@ -10,6 +10,7 @@
     <title>TetoEgen Case Study — Jaeho Jung</title>
     <link rel="stylesheet" href="../css/main.css" />
     <link rel="stylesheet" href="../css/media.css" />
+    <link rel="stylesheet" href="../css/case-study.css" />
   </head>
   <body class="site">
     <header class="header">
@@ -50,34 +51,15 @@
             the reasoning requirements are different.
           </p>
 
-          <div class="markdown-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Vertical</th>
-                  <th>Primary decision mechanism</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Teto / Egen face test</td>
-                  <td>Face-image analysis and product-specific scoring</td>
-                </tr>
-                <tr>
-                  <td>Animal-face test</td>
-                  <td>Image classification with a reviewed training dataset</td>
-                </tr>
-                <tr>
-                  <td>Hairstyle recommendation</td>
-                  <td>Continuous facial geometry + explicit recommendation rules</td>
-                </tr>
-                <tr>
-                  <td>Attachment-style test</td>
-                  <td>Deterministic questionnaire scoring, not an AI prediction</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <figure class="evidence-figure">
+            <img
+              src="../img/case-studies/tetoegen-product-family.svg"
+              alt="System diagram showing four TetoEgen product verticals sharing one product shell while using different inference mechanisms"
+            />
+            <figcaption>
+              <strong>Figure 1 · Product architecture.</strong> The four verticals share product infrastructure, not an artificial common “AI” layer. Attachment-style scoring remains deterministic because that is the appropriate mechanism for the product claim.
+            </figcaption>
+          </figure>
 
           <p>
             Keeping these mechanisms distinct was deliberate. A superficially
@@ -128,6 +110,16 @@
             result to a user, but it is not the primary selector of hairstyle families.
           </p>
 
+          <figure class="evidence-figure">
+            <img
+              src="../img/case-studies/tetoegen-hairstyle-evidence.svg"
+              alt="Evidence chain from pose quality and continuous facial measurements through a silhouette engine to ranked hairstyle recommendations"
+            />
+            <figcaption>
+              <strong>Figure 2 · Recommendation evidence chain.</strong> The current implementation separates input quality, continuous geometry, target silhouette construction, and ranking/explanation. The versioned silhouette rules can be inspected and calibrated independently instead of hiding the decision behind a single face-shape label.
+            </figcaption>
+          </figure>
+
           <blockquote>
             <p>
               Design principle: preserve the readable label for UX, but let the
@@ -161,6 +153,16 @@
             visual category.
           </p>
 
+          <figure class="evidence-figure">
+            <img
+              src="../img/case-studies/tetoegen-animal-data.svg"
+              alt="Animal-face dataset workflow from source discovery through face quality review, identity-disjoint train validation test splits, augmentation, lineage, and evaluation"
+            />
+            <figcaption>
+              <strong>Figure 3 · Dataset integrity pipeline.</strong> The split happens by person identity rather than by image. That choice is specifically intended to prevent a classifier metric from being inflated by seeing different photos of the same celebrity across training and evaluation sets.
+            </figcaption>
+          </figure>
+
           <p>
             The collector also rejects crops that would require artificial padding
             or excessive upscaling. It records whether a fallback thumbnail was used,
@@ -188,6 +190,16 @@
             The goal was to collect enough evidence to understand whether the product
             worked without confusing observability with indiscriminate data collection.
           </p>
+
+          <figure class="evidence-figure">
+            <img
+              src="../img/case-studies/tetoegen-evidence-boundary.svg"
+              alt="Review framework connecting input quality, runtime contracts, behavior evidence, and privacy-safe observability to release decisions"
+            />
+            <figcaption>
+              <strong>Figure 4 · Evidence boundary.</strong> A generated result is only one event in the chain. Input validity, runtime semantics, inspectable behavior, and privacy-safe observability determine whether the product claim is actually supported.
+            </figcaption>
+          </figure>
 
           <h2>4. What this project changed in how I review AI MVPs</h2>
 

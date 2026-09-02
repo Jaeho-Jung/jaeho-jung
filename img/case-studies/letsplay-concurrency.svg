@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+<title id="title">LetsPlay concurrency throughput versus tail latency</title><desc id="desc">A recorded experiment comparing four request-processing strategies shows that the highest throughput configuration had much worse P95 latency.</desc>
+<rect width="1200" height="720" fill="#f7f5f0"/>
+<style>.h{font:600 32px Georgia,serif;fill:#1c1916}.s{font:400 18px Georgia,serif;fill:#4a473f}.k{font:500 14px monospace;fill:#6b2a2a;letter-spacing:.04em}.t{font:600 18px Georgia,serif;fill:#1c1916}.b{font:400 14px Georgia,serif;fill:#4a473f}.m{font:500 12px monospace;fill:#6b6759}.axis{stroke:#d3c9b3;stroke-width:1.2}.q{fill:#74582f}.p{fill:#6b2a2a}.box{fill:#efe1df;stroke:#6b2a2a;stroke-width:1.4}</style>
+<text x="55" y="66" class="k">RECORDED CONCURRENCY EXPERIMENT · 50 REQUESTS</text><text x="55" y="106" class="h">Higher throughput made the interactive experience slower</text><text x="55" y="141" class="s">The decision signal was the throughput–tail-latency tradeoff, not a universal benchmark claim.</text>
+<text x="55" y="205" class="m">STRATEGY</text><text x="355" y="205" class="m">THROUGHPUT · QPS</text><text x="760" y="205" class="m">P95 LATENCY · SECONDS</text>
+<line x1="350" y1="220" x2="680" y2="220" class="axis"/><line x1="755" y1="220" x2="1135" y2="220" class="axis"/>
+<text x="55" y="270" class="t">Sequential baseline</text><rect x="355" y="246" width="263" height="28" rx="4" class="q"/><text x="630" y="266" class="b">5.28</text><rect x="760" y="246" width="3" height="28" rx="2" class="p"/><text x="775" y="266" class="b">0.259</text>
+<text x="55" y="350" class="t">CTranslate2 workers</text><rect x="355" y="326" width="330" height="28" rx="4" class="q"/><text x="697" y="346" class="b">6.62</text><rect x="760" y="326" width="82" height="28" rx="4" class="p"/><text x="855" y="346" class="b">7.394</text>
+<text x="55" y="430" class="t">Async queue</text><rect x="355" y="406" width="109" height="28" rx="4" class="q"/><text x="476" y="426" class="b">2.18</text><rect x="760" y="406" width="244" height="28" rx="4" class="p"/><text x="1018" y="426" class="b">22.016</text>
+<text x="55" y="510" class="t">Micro-batch</text><rect x="355" y="486" width="70" height="28" rx="4" class="q"/><text x="437" y="506" class="b">1.41</text><rect x="760" y="486" width="365" height="28" rx="4" class="p"/><text x="1135" y="506" text-anchor="end" class="b">32.990</text>
+<rect x="250" y="580" rx="10" width="700" height="82" class="box"/><text x="600" y="612" text-anchor="middle" class="t">+25% throughput, ~28× P95 latency</text><text x="600" y="640" text-anchor="middle" class="b">The highest-QPS worker configuration was a worse choice for a real-time voice interaction.</text>
+<text x="55" y="695" class="m">Scope note · values come from one implementation; model loading and network I/O were excluded.</text>
+</svg>

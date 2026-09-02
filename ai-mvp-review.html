@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Independent evidence review for AI-built MVPs: test product claims, document failures, identify launch blockers, and separate what was verified from what was not."
+    />
+    <title>AI MVP Evidence Check — Jaeho Jung</title>
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/media.css" />
+  </head>
+
+  <body class="site">
+    <header class="header">
+      <div class="wrap header-wrap">
+        <a href="index.html#home" class="logo">Jaeho Jung</a>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="index.html#about" class="nav-link">About</a>
+          <a href="index.html#projects" class="nav-link">AI Work</a>
+          <a href="index.html#engineering" class="nav-link active">Engineering</a>
+          <a href="index.html#contact" class="nav-link">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <article class="post-page wrap">
+        <div class="post-kicker">AI MVP Evidence Check · Independent product review</div>
+        <div class="post-content">
+          <h1>Your AI MVP works in the demo. I check whether it actually works.</h1>
+
+          <blockquote>
+            <p>
+              Send me the product and the claims you are relying on. I test the important
+              flows, collect evidence, identify launch blockers, and make the boundary
+              between verified and unverified behavior explicit.
+            </p>
+          </blockquote>
+
+          <div class="text-links">
+            <a href="mailto:jaeho.builds@gmail.com?subject=AI%20MVP%20Evidence%20Check&amp;body=Product%20URL%20or%20build%3A%0A%0AWhat%20we%20believe%20it%20can%20do%3A%0A%0AMain%20concern%20before%20launch%3A%0A">Send your MVP →</a>
+            <a href="#packages">See packages ↓</a>
+          </div>
+
+          <h2>Who this is for</h2>
+          <p>
+            Founders, small product teams, and agencies that have built an AI product
+            quickly and need an independent check before launch, client delivery, or the
+            next round of engineering work.
+          </p>
+          <p>
+            This is most useful when the product already has a working build, but the team
+            still needs to know which claims are supported by observed behavior and which
+            are only demonstrated by a happy path.
+          </p>
+
+          <h2>What I do</h2>
+          <p>
+            The review follows one simple chain:
+            <strong>Claim → Test → Evidence → Severity → Recommendation.</strong>
+          </p>
+          <p>
+            I focus on observable product behavior: whether the core flow works under the
+            conditions you claim, where it fails, whether failure states are handled, and
+            what evidence is strong enough to support a release decision.
+          </p>
+
+          <h3>You receive</h3>
+          <ul>
+            <li><strong>Evidence Matrix:</strong> claim or flow, result, evidence, severity, recommendation</li>
+            <li><strong>Top 5 launch risks:</strong> the issues most likely to matter to users or delivery</li>
+            <li><strong>Fix now / Fix later:</strong> prioritized rather than undifferentiated bug lists</li>
+            <li><strong>Tested / Not tested boundary:</strong> exactly what the review does and does not establish</li>
+          </ul>
+
+          <h2>What this looks like in practice</h2>
+
+          <div class="entry-list">
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">TetoEgen</h3>
+                <span class="entry-meta">Consumer AI product</span>
+              </div>
+              <p class="entry-body">
+                I built and evaluated a deployed multi-vertical AI product where different
+                claims required different evidence: face analysis, image classification,
+                geometry-driven hairstyle recommendation, and deterministic questionnaire
+                scoring. The case study shows how input validity, dataset integrity,
+                inspectable recommendation logic, and failure boundaries were separated
+                instead of being hidden behind one generic “AI” layer.
+              </p>
+              <div class="entry-links">
+                <a href="case-studies/tetoegen.html">Read the case study →</a>
+              </div>
+            </article>
+
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">LetsPlay Infant Speech ASR</h3>
+                <span class="entry-meta">Speech AI · deployment evidence</span>
+              </div>
+              <p class="entry-body">
+                In a real-time child-speech project, model conversion succeeded while runtime
+                behavior failed, synthetic data looked stronger than the target-domain evidence,
+                and higher server throughput produced unacceptable tail latency. Those findings
+                changed the architecture and removed benchmark claims the measurement method
+                could not support.
+              </p>
+              <div class="entry-links">
+                <a href="case-studies/infant-speech-asr.html">Read the case study →</a>
+              </div>
+            </article>
+          </div>
+
+          <h2 id="packages">Packages</h2>
+
+          <div class="entry-list">
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">Evidence Check</h3>
+                <span class="entry-meta">₩290k</span>
+              </div>
+              <p class="entry-body">
+                A focused review of the primary product claim or core user flow. Best when
+                you need an external check on the most important thing the MVP says it can do.
+              </p>
+            </article>
+
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">MVP Evidence Review</h3>
+                <span class="entry-meta">₩690k</span>
+              </div>
+              <p class="entry-body">
+                A broader review across the MVP’s core flows, failure behavior, and release
+                risks, delivered as a prioritized evidence and decision report.
+              </p>
+            </article>
+
+            <article class="entry">
+              <div class="entry-head">
+                <h3 class="entry-title">Review + Fix Sprint</h3>
+                <span class="entry-meta">₩1.29m+</span>
+              </div>
+              <p class="entry-body">
+                The evidence review plus implementation of an agreed set of high-priority
+                fixes and re-verification. Final scope depends on the product and codebase.
+              </p>
+            </article>
+          </div>
+
+          <h2>Start with the claim, not a long brief</h2>
+          <p>
+            You do not need a formal specification. Send the URL or build, what you believe
+            the product can do, and the main thing you are uncertain about before launch.
+          </p>
+
+          <blockquote>
+            <p>
+              Send me your MVP and what you believe it can do.
+            </p>
+          </blockquote>
+
+          <p>
+            <a class="contact-email" href="mailto:jaeho.builds@gmail.com?subject=AI%20MVP%20Evidence%20Check&amp;body=Product%20URL%20or%20build%3A%0A%0AWhat%20we%20believe%20it%20can%20do%3A%0A%0AMain%20concern%20before%20launch%3A%0A">
+              jaeho.builds@gmail.com
+            </a>
+          </p>
+
+          <nav class="post-nav" aria-label="Page navigation">
+            <a href="index.html#engineering">← Engineering</a>
+            <a href="case-studies/tetoegen.html">TetoEgen case study →</a>
+          </nav>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>

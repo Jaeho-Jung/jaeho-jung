@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Case study: infant speech ASR research for LetsPlay, covering scarce-data experiments, deployment pivots, and production-oriented inference benchmarking."
+    />
+    <title>Infant Speech ASR Case Study — Jaeho Jung</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/media.css" />
+  </head>
+  <body class="site">
+    <header class="header">
+      <div class="wrap header-wrap">
+        <a href="../index.html#home" class="logo">Jaeho Jung</a>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="../index.html#about" class="nav-link">About</a>
+          <a href="../index.html#projects" class="nav-link active">AI Work</a>
+          <a href="../index.html#engineering" class="nav-link">Engineering</a>
+          <a href="../index.html#writing" class="nav-link">Writing</a>
+          <a href="../index.html#performance" class="nav-link">Performance</a>
+          <a href="../index.html#contact" class="nav-link">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <article class="post-page wrap">
+        <div class="post-kicker">Case Study · Speech AI · Experimental Evidence</div>
+        <div class="post-content">
+          <h1>LetsPlay Infant Speech ASR — Letting Experimental Evidence Change the Architecture</h1>
+
+          <blockquote>
+            <p>
+              A university–industry capstone project exploring real-time voice
+              interaction for young children. My AI work focused on a difficult
+              constraint: recognizing short Korean child utterances with scarce,
+              distribution-shifted data and then turning the result into a deployable system.
+            </p>
+          </blockquote>
+
+          <p>
+            The objective was not simply to fine-tune a speech model. I needed to
+            determine whether the available data supported the recognition claim,
+            whether model improvements generalized beyond the training distribution,
+            and whether the resulting inference path made sense inside the product.
+          </p>
+
+          <h2>1. Expanding scarce data without confusing augmentation with generalization</h2>
+
+          <p>
+            The project began with roughly 200 recorded utterances. Child speech is
+            unusually difficult for general-purpose ASR because articulation, pitch,
+            duration, and pronunciation can differ substantially from adult speech.
+          </p>
+
+          <p>I built and evaluated an augmentation pipeline using:</p>
+          <ul>
+            <li>spectrogram augmentation and swapping,</li>
+            <li>frequency-domain filtering,</li>
+            <li>background-noise mixing at controlled SNRs,</li>
+            <li>reverberation,</li>
+            <li>speed perturbation.</li>
+          </ul>
+
+          <p>
+            This expanded the experimental dataset from approximately 200 to 4,200 files.
+            Fine-tuning Whisper-tiny on the constrained keyword dataset eventually produced
+            extremely strong in-distribution character-error results after regularization
+            and training changes.
+          </p>
+
+          <p>
+            I did not interpret that as proof that the system understood real child speech.
+            With a very small keyword vocabulary and many samples derived from a limited
+            original distribution, a near-perfect metric can be stronger evidence of task
+            memorization than of target-domain generalization.
+          </p>
+
+          <blockquote>
+            <p>
+              The experiment forced a useful separation: “Can the model learn this
+              constrained dataset?” and “Does the evidence support the product claim on
+              real child speech?” are different questions.
+            </p>
+          </blockquote>
+
+          <p>
+            That distinction shaped the later work: target-domain evaluation mattered more
+            than continuing to optimize a metric on the augmented training environment.
+          </p>
+
+          <h2>2. A successful model conversion was not a successful deployment</h2>
+
+          <p>
+            The original product direction favored on-device speech recognition. I tested
+            several conversion and runtime paths to see whether the model could be moved
+            into a mobile-friendly inference environment.
+          </p>
+
+          <div class="markdown-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Approach</th>
+                  <th>Observed result</th>
+                  <th>Interpretation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>ONNX → TFLite</td>
+                  <td>Conversion completed; inference emitted abnormal repeated character sequences</td>
+                  <td>Artifact conversion alone did not establish runtime viability</td>
+                </tr>
+                <tr>
+                  <td>OpenVINO INT8</td>
+                  <td>Conversion and CPU inference succeeded</td>
+                  <td>Alternative runtime path was technically viable</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            I did not claim a confirmed root cause for the TFLite failure. Operator support
+            and dynamic-tensor handling were plausible contributors, but the evidence was
+            insufficient to isolate a single cause.
+          </p>
+
+          <p>
+            More importantly, the engineering decision changed. The relevant question was
+            no longer “Can I eventually force this model onto the device?” but “Is continuing
+            to invest in edge deployment rational under the project deadline and recognition
+            constraints?”
+          </p>
+
+          <p>
+            I pivoted the architecture from edge inference to server-side GPU inference.
+            The technical preference did not get to overrule the product constraint.
+          </p>
+
+          <h2>3. Rejecting benchmark claims that the measurement method could not support</h2>
+
+          <p>
+            After the capstone, I continued the project with production-oriented inference
+            experiments across PyTorch, ONNX Runtime, dynamic INT8 quantization,
+            <code>torch.compile</code>, and Faster-Whisper / CTranslate2.
+          </p>
+
+          <p>
+            One CPU experiment produced a counter-intuitive result: under the recorded
+            Colab CPU and implementation conditions, dynamic INT8 inference was slower than
+            direct FP32 inference. I kept that conclusion local to the measured setup rather
+            than generalizing it into “INT8 is bad for Whisper.”
+          </p>
+
+          <p>
+            A second measurement problem was more instructive. An early Faster-Whisper
+            memory figure appeared dramatically smaller than the PyTorch result. But it had
+            been collected with <code>torch.cuda.memory_allocated()</code>. CTranslate2 allocates
+            CUDA memory outside PyTorch's allocator, so that number could not support a
+            cross-engine VRAM comparison.
+          </p>
+
+          <p>
+            I removed the resulting “98% memory reduction” claim and marked the measurement
+            for re-testing with process-level instrumentation such as NVML or
+            <code>nvidia-smi</code>. I applied the same rule to latency: measurements with
+            different warm-up procedures, generation paths, or timing scopes were not
+            presented as a single controlled benchmark.
+          </p>
+
+          <blockquote>
+            <p>
+              The goal was not to produce the fastest-looking chart. It was to keep the
+              boundary between what the experiment showed and what I wanted it to show.
+            </p>
+          </blockquote>
+
+          <h2>4. Throughput was not the same as a responsive voice product</h2>
+
+          <p>
+            I also compared request-processing strategies for a CTranslate2-based inference
+            service. In one recorded experiment, increasing worker concurrency improved
+            throughput from roughly 5.28 to 6.62 requests per second, but P95 latency rose
+            from roughly 0.26 seconds in the sequential baseline to about 7.39 seconds.
+          </p>
+
+          <div class="markdown-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Strategy</th>
+                  <th>QPS</th>
+                  <th>P95 latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Sequential baseline</td>
+                  <td>5.28</td>
+                  <td>0.259s</td>
+                </tr>
+                <tr>
+                  <td>CTranslate2 workers</td>
+                  <td>6.62</td>
+                  <td>7.394s</td>
+                </tr>
+                <tr>
+                  <td>Async queue</td>
+                  <td>2.18</td>
+                  <td>22.016s</td>
+                </tr>
+                <tr>
+                  <td>Micro-batch</td>
+                  <td>1.41</td>
+                  <td>32.990s</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            The absolute numbers came from a specific experimental implementation and are
+            not universal performance claims. What mattered was the decision signal: the
+            configuration with the highest throughput had unacceptable tail latency for an
+            interactive voice experience.
+          </p>
+
+          <p>
+            Optimizing the easiest server metric would have made the user-facing system worse.
+          </p>
+
+          <h2>What I would evaluate differently now</h2>
+
+          <p>
+            The repository is also a record of where the experimental design could have been
+            stronger. If I reran the project today, I would change several things early.
+          </p>
+
+          <ul>
+            <li>
+              <strong>Target-domain evaluation first:</strong> reserve a fixed child-speech
+              test set before large-scale augmentation so that every model decision is tied
+              to the real deployment distribution.
+            </li>
+            <li>
+              <strong>Matched model comparisons:</strong> standardize decoding, audio samples,
+              warm-up, repetition count, and metric calculation before comparing runtimes or
+              model families.
+            </li>
+            <li>
+              <strong>Deployment constraints earlier:</strong> benchmark the actual mobile and
+              server constraints before investing deeply in a conversion path.
+            </li>
+            <li>
+              <strong>User-facing latency budget:</strong> define an interaction-level latency
+              SLO and optimize concurrency against that constraint rather than maximizing QPS
+              in isolation.
+            </li>
+          </ul>
+
+          <h2>Outcome</h2>
+
+          <p>
+            The research produced more than a fine-tuned speech model. It produced a sequence
+            of evidence-based architectural decisions: distinguish synthetic diversity from
+            target-domain evidence, distinguish conversion from working inference, abandon an
+            edge architecture when it no longer fits the product, and reject performance claims
+            when the measurement method cannot support them.
+          </p>
+
+          <p>
+            That distinction — between a working experiment and defensible evidence — is now
+            central to how I evaluate AI prototypes.
+          </p>
+
+          <p>
+            <strong>Stack:</strong> Python, PyTorch, Hugging Face Transformers, Whisper,
+            ONNX, OpenVINO, CTranslate2 / Faster-Whisper, FastAPI
+          </p>
+
+          <p>
+            <strong>Research repository:</strong>
+            <a href="https://github.com/Jaeho-Jung/LetsPlay-ai-research" target="_blank" rel="noreferrer">Jaeho-Jung/LetsPlay-ai-research</a><br />
+            <strong>Service backend:</strong>
+            <a href="https://github.com/Jaeho-Jung/LetsPlay-server" target="_blank" rel="noreferrer">Jaeho-Jung/LetsPlay-server</a>
+          </p>
+
+          <nav class="post-nav" aria-label="Case study navigation">
+            <a href="tetoegen.html">← TetoEgen case study</a>
+            <a href="../index.html#projects">AI Work →</a>
+          </nav>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>

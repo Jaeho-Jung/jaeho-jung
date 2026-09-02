@@ -35,42 +35,32 @@
 
           <blockquote>
             <p>
-              A university–industry capstone project exploring real-time voice
-              interaction for young children. My AI work focused on a difficult
-              constraint: recognizing short Korean child utterances with scarce,
-              distribution-shifted data and then turning the result into a deployable system.
+              A university–industry capstone on real-time voice interaction for young
+              children. My AI work focused on recognizing short Korean child utterances
+              from scarce, distribution-shifted data — and deciding what the evidence
+              justified in a deployable system.
             </p>
           </blockquote>
 
           <p>
-            The objective was not simply to fine-tune a speech model. I needed to
-            determine whether the available data supported the recognition claim,
-            whether model improvements generalized beyond the training distribution,
-            and whether the resulting inference path made sense inside the product.
+            The task was not just to fine-tune a model. I needed to separate training-set
+            progress from target-domain evidence, test deployment paths, and measure the
+            system in ways that supported product decisions.
           </p>
 
-          <h2>1. Expanding scarce data without confusing augmentation with generalization</h2>
+          <h2>1. Augmentation was not evidence of generalization</h2>
 
           <p>
-            The project began with roughly 200 recorded utterances. Child speech is
-            unusually difficult for general-purpose ASR because articulation, pitch,
-            duration, and pronunciation can differ substantially from adult speech.
+            The project began with roughly 200 recorded utterances. I expanded the dataset
+            to about 4,200 files using spectrogram augmentation, frequency filtering,
+            controlled-SNR noise mixing, reverberation, and speed perturbation.
           </p>
 
-          <p>I built and evaluated an augmentation pipeline using:</p>
-          <ul>
-            <li>spectrogram augmentation and swapping,</li>
-            <li>frequency-domain filtering,</li>
-            <li>background-noise mixing at controlled SNRs,</li>
-            <li>reverberation,</li>
-            <li>speed perturbation.</li>
-          </ul>
-
           <p>
-            This expanded the experimental dataset from approximately 200 to 4,200 files.
-            Fine-tuning Whisper-tiny on the constrained keyword dataset eventually produced
-            extremely strong in-distribution character-error results after regularization
-            and training changes.
+            Whisper-tiny eventually produced extremely strong in-distribution character-error
+            results on the constrained keyword task. But most added samples were transformations
+            of a limited source distribution, so that metric answered a narrower question than
+            performance on real child speech.
           </p>
 
           <figure class="evidence-figure">
@@ -79,36 +69,24 @@
               alt="Diagram showing roughly 200 original utterances expanded to about 4200 augmented files while separating in-distribution performance from real child-speech generalization"
             />
             <figcaption>
-              <strong>Figure 1 · Evidence boundary for augmentation.</strong> The file count increased about 21×, but most new samples were transformations of a limited source distribution. Strong performance on that dataset therefore answered a narrower question than real child-speech generalization.
+              <strong>Figure 1 · Evidence boundary for augmentation.</strong> The file count increased about 21×, but synthetic diversity did not replace target-domain evaluation.
             </figcaption>
           </figure>
 
-          <p>
-            I did not interpret that as proof that the system understood real child speech.
-            With a very small keyword vocabulary and many samples derived from a limited
-            original distribution, a near-perfect metric can be stronger evidence of task
-            memorization than of target-domain generalization.
-          </p>
-
           <blockquote>
             <p>
-              The experiment forced a useful separation: “Can the model learn this
-              constrained dataset?” and “Does the evidence support the product claim on
-              real child speech?” are different questions.
+              “Can the model learn this constrained dataset?” and “Does the evidence support
+              the product claim on real child speech?” are different questions.
             </p>
           </blockquote>
 
-          <p>
-            That distinction shaped the later work: target-domain evaluation mattered more
-            than continuing to optimize a metric on the augmented training environment.
-          </p>
-
-          <h2>2. A successful model conversion was not a successful deployment</h2>
+          <h2>2. Conversion success was not deployment success</h2>
 
           <p>
-            The original product direction favored on-device speech recognition. I tested
-            several conversion and runtime paths to see whether the model could be moved
-            into a mobile-friendly inference environment.
+            The original architecture favored on-device inference. ONNX→TFLite conversion
+            completed, but runtime inference emitted invalid repeated-character output.
+            OpenVINO INT8 conversion and CPU inference succeeded, showing that another edge
+            path was technically viable.
           </p>
 
           <figure class="evidence-figure">
@@ -117,73 +95,51 @@
               alt="Architecture decision diagram showing ONNX to TFLite conversion succeeding while runtime inference failed, OpenVINO CPU inference succeeding, and the product pivoting from edge to cloud GPU inference"
             />
             <figcaption>
-              <strong>Figure 2 · Edge → Cloud pivot.</strong> ONNX→TFLite artifact conversion completed, but runtime output was invalid. OpenVINO provided a technically viable CPU path, yet product deadline and recognition-quality constraints made continued edge work the wrong optimization target.
+              <strong>Figure 2 · Edge → Cloud pivot.</strong> Artifact conversion was not enough; runtime behavior, deadline, and recognition constraints determined the architecture.
             </figcaption>
           </figure>
 
           <p>
-            I did not claim a confirmed root cause for the TFLite failure. Operator support
-            and dynamic-tensor handling were plausible contributors, but the evidence was
-            insufficient to isolate a single cause.
+            I did not claim a confirmed root cause for the TFLite failure; operator support
+            and dynamic-tensor handling remained hypotheses. The product decision was clearer:
+            further edge work was not the best use of the remaining schedule, so I moved
+            inference to a server-side GPU.
+          </p>
+
+          <h2>3. Benchmark claims had to match the measurement method</h2>
+
+          <p>
+            I later compared PyTorch, ONNX Runtime, dynamic INT8 quantization,
+            <code>torch.compile</code>, and Faster-Whisper / CTranslate2 under production-oriented
+            experiments.
           </p>
 
           <p>
-            More importantly, the engineering decision changed. The relevant question was
-            no longer “Can I eventually force this model onto the device?” but “Is continuing
-            to invest in edge deployment rational under the project deadline and recognition
-            constraints?”
+            In one recorded Colab CPU setup, dynamic INT8 was slower than direct FP32. I kept
+            that conclusion local to the measured implementation rather than turning it into
+            a general claim about Whisper quantization.
           </p>
 
           <p>
-            I pivoted the architecture from edge inference to server-side GPU inference.
-            The technical preference did not get to overrule the product constraint.
-          </p>
-
-          <h2>3. Rejecting benchmark claims that the measurement method could not support</h2>
-
-          <p>
-            After the capstone, I continued the project with production-oriented inference
-            experiments across PyTorch, ONNX Runtime, dynamic INT8 quantization,
-            <code>torch.compile</code>, and Faster-Whisper / CTranslate2.
+            A more important error came from memory measurement. An early Faster-Whisper result
+            appeared dramatically smaller than PyTorch because it used
+            <code>torch.cuda.memory_allocated()</code>. CTranslate2 allocates CUDA memory outside
+            PyTorch's allocator, so the comparison was invalid.
           </p>
 
           <p>
-            One CPU experiment produced a counter-intuitive result: under the recorded
-            Colab CPU and implementation conditions, dynamic INT8 inference was slower than
-            direct FP32 inference. I kept that conclusion local to the measured setup rather
-            than generalizing it into “INT8 is bad for Whisper.”
+            I removed the resulting “98% memory reduction” claim and marked it for re-testing
+            with process-level instrumentation such as NVML or <code>nvidia-smi</code>. I applied
+            the same discipline to latency: measurements with different warm-up, decoding, or
+            timing scopes were not presented as one controlled benchmark.
           </p>
 
-          <p>
-            A second measurement problem was more instructive. An early Faster-Whisper
-            memory figure appeared dramatically smaller than the PyTorch result. But it had
-            been collected with <code>torch.cuda.memory_allocated()</code>. CTranslate2 allocates
-            CUDA memory outside PyTorch's allocator, so that number could not support a
-            cross-engine VRAM comparison.
-          </p>
+          <h2>4. Throughput was not responsiveness</h2>
 
           <p>
-            I removed the resulting “98% memory reduction” claim and marked the measurement
-            for re-testing with process-level instrumentation such as NVML or
-            <code>nvidia-smi</code>. I applied the same rule to latency: measurements with
-            different warm-up procedures, generation paths, or timing scopes were not
-            presented as a single controlled benchmark.
-          </p>
-
-          <blockquote>
-            <p>
-              The goal was not to produce the fastest-looking chart. It was to keep the
-              boundary between what the experiment showed and what I wanted it to show.
-            </p>
-          </blockquote>
-
-          <h2>4. Throughput was not the same as a responsive voice product</h2>
-
-          <p>
-            I also compared request-processing strategies for a CTranslate2-based inference
-            service. In one recorded experiment, increasing worker concurrency improved
-            throughput from roughly 5.28 to 6.62 requests per second, but P95 latency rose
-            from roughly 0.26 seconds in the sequential baseline to about 7.39 seconds.
+            In one CTranslate2 service experiment, increasing worker concurrency raised
+            throughput from about 5.28 to 6.62 requests per second, while P95 latency rose
+            from 0.259s to 7.394s.
           </p>
 
           <figure class="evidence-figure">
@@ -192,58 +148,42 @@
               alt="Bar comparison of throughput and P95 latency for sequential baseline, CTranslate2 workers, async queue, and micro-batch request processing"
             />
             <figcaption>
-              <strong>Figure 3 · Throughput vs tail latency.</strong> In this recorded 50-request experiment, the worker configuration raised QPS by about 25% but increased P95 latency from 0.259s to 7.394s. The figure is a decision artifact for this implementation, not a universal CTranslate2 benchmark.
+              <strong>Figure 3 · Throughput vs tail latency.</strong> In this recorded 50-request experiment, worker concurrency improved QPS by about 25% but produced unacceptable tail latency for an interactive voice product. This is a decision artifact for this implementation, not a universal CTranslate2 benchmark.
             </figcaption>
           </figure>
 
           <p>
-            The absolute numbers came from a specific experimental implementation and are
-            not universal performance claims. What mattered was the decision signal: the
-            configuration with the highest throughput had unacceptable tail latency for an
-            interactive voice experience.
-          </p>
-
-          <p>
-            Optimizing the easiest server metric would have made the user-facing system worse.
+            Maximizing the easiest server metric would have made the user-facing interaction worse.
           </p>
 
           <h2>What I would evaluate differently now</h2>
 
-          <p>
-            The repository is also a record of where the experimental design could have been
-            stronger. If I reran the project today, I would change several things early.
-          </p>
-
           <ul>
             <li>
-              <strong>Target-domain evaluation first:</strong> reserve a fixed child-speech
-              test set before large-scale augmentation so that every model decision is tied
-              to the real deployment distribution.
+              <strong>Target-domain evaluation first:</strong> reserve a fixed child-speech test
+              set before large-scale augmentation.
             </li>
             <li>
-              <strong>Matched model comparisons:</strong> standardize decoding, audio samples,
-              warm-up, repetition count, and metric calculation before comparing runtimes or
-              model families.
+              <strong>Matched comparisons:</strong> standardize decoding, samples, warm-up,
+              repetition count, and metric calculation across runtimes and models.
             </li>
             <li>
-              <strong>Deployment constraints earlier:</strong> benchmark the actual mobile and
-              server constraints before investing deeply in a conversion path.
+              <strong>Deployment constraints earlier:</strong> benchmark actual mobile/server
+              constraints before investing deeply in conversion.
             </li>
             <li>
-              <strong>User-facing latency budget:</strong> define an interaction-level latency
-              SLO and optimize concurrency against that constraint rather than maximizing QPS
-              in isolation.
+              <strong>Latency budget:</strong> define an interaction-level SLO and optimize
+              concurrency against it instead of maximizing QPS in isolation.
             </li>
           </ul>
 
           <h2>Outcome</h2>
 
           <p>
-            The research produced more than a fine-tuned speech model. It produced a sequence
-            of evidence-based architectural decisions: distinguish synthetic diversity from
-            target-domain evidence, distinguish conversion from working inference, abandon an
-            edge architecture when it no longer fits the product, and reject performance claims
-            when the measurement method cannot support them.
+            The project produced a sequence of evidence-based decisions: distinguish synthetic
+            diversity from target-domain evidence, distinguish conversion from working inference,
+            abandon an edge path when it no longer fits the product, and reject benchmark claims
+            the measurement method cannot support.
           </p>
 
           <p>

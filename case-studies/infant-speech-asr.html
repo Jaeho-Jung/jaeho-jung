@@ -63,16 +63,6 @@
             performance on real child speech.
           </p>
 
-          <figure class="evidence-figure">
-            <img
-              src="../img/case-studies/letsplay-data-evidence.svg"
-              alt="Diagram showing roughly 200 original utterances expanded to about 4200 augmented files while separating in-distribution performance from real child-speech generalization"
-            />
-            <figcaption>
-              <strong>Figure 1 · Evidence boundary for augmentation.</strong> The file count increased about 21×, but synthetic diversity did not replace target-domain evaluation.
-            </figcaption>
-          </figure>
-
           <blockquote>
             <p>
               “Can the model learn this constrained dataset?” and “Does the evidence support
@@ -95,7 +85,7 @@
               alt="Architecture decision diagram showing ONNX to TFLite conversion succeeding while runtime inference failed, OpenVINO CPU inference succeeding, and the product pivoting from edge to cloud GPU inference"
             />
             <figcaption>
-              <strong>Figure 2 · Edge → Cloud pivot.</strong> Artifact conversion was not enough; runtime behavior, deadline, and recognition constraints determined the architecture.
+              <strong>Figure 1 · Edge → Cloud pivot.</strong> Artifact conversion was not enough; runtime behavior, deadline, and recognition constraints determined the architecture.
             </figcaption>
           </figure>
 
@@ -148,7 +138,7 @@
               alt="Bar comparison of throughput and P95 latency for sequential baseline, CTranslate2 workers, async queue, and micro-batch request processing"
             />
             <figcaption>
-              <strong>Figure 3 · Throughput vs tail latency.</strong> In this recorded 50-request experiment, worker concurrency improved QPS by about 25% but produced unacceptable tail latency for an interactive voice product. This is a decision artifact for this implementation, not a universal CTranslate2 benchmark.
+              <strong>Figure 2 · Throughput vs tail latency.</strong> In this recorded 50-request experiment, worker concurrency improved QPS by about 25% but produced unacceptable tail latency for an interactive voice product. This is a decision artifact for this implementation, not a universal CTranslate2 benchmark.
             </figcaption>
           </figure>
 

@@ -10,6 +10,7 @@
     <title>Infant Speech ASR Case Study — Jaeho Jung</title>
     <link rel="stylesheet" href="../css/main.css" />
     <link rel="stylesheet" href="../css/media.css" />
+    <link rel="stylesheet" href="../css/case-study.css" />
   </head>
   <body class="site">
     <header class="header">
@@ -72,6 +73,16 @@
             and training changes.
           </p>
 
+          <figure class="evidence-figure">
+            <img
+              src="../img/case-studies/letsplay-data-evidence.svg"
+              alt="Diagram showing roughly 200 original utterances expanded to about 4200 augmented files while separating in-distribution performance from real child-speech generalization"
+            />
+            <figcaption>
+              <strong>Figure 1 · Evidence boundary for augmentation.</strong> The file count increased about 21×, but most new samples were transformations of a limited source distribution. Strong performance on that dataset therefore answered a narrower question than real child-speech generalization.
+            </figcaption>
+          </figure>
+
           <p>
             I did not interpret that as proof that the system understood real child speech.
             With a very small keyword vocabulary and many samples derived from a limited
@@ -100,29 +111,15 @@
             into a mobile-friendly inference environment.
           </p>
 
-          <div class="markdown-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Approach</th>
-                  <th>Observed result</th>
-                  <th>Interpretation</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>ONNX → TFLite</td>
-                  <td>Conversion completed; inference emitted abnormal repeated character sequences</td>
-                  <td>Artifact conversion alone did not establish runtime viability</td>
-                </tr>
-                <tr>
-                  <td>OpenVINO INT8</td>
-                  <td>Conversion and CPU inference succeeded</td>
-                  <td>Alternative runtime path was technically viable</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <figure class="evidence-figure">
+            <img
+              src="../img/case-studies/letsplay-edge-cloud.svg"
+              alt="Architecture decision diagram showing ONNX to TFLite conversion succeeding while runtime inference failed, OpenVINO CPU inference succeeding, and the product pivoting from edge to cloud GPU inference"
+            />
+            <figcaption>
+              <strong>Figure 2 · Edge → Cloud pivot.</strong> ONNX→TFLite artifact conversion completed, but runtime output was invalid. OpenVINO provided a technically viable CPU path, yet product deadline and recognition-quality constraints made continued edge work the wrong optimization target.
+            </figcaption>
+          </figure>
 
           <p>
             I did not claim a confirmed root cause for the TFLite failure. Operator support
@@ -189,39 +186,15 @@
             from roughly 0.26 seconds in the sequential baseline to about 7.39 seconds.
           </p>
 
-          <div class="markdown-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Strategy</th>
-                  <th>QPS</th>
-                  <th>P95 latency</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Sequential baseline</td>
-                  <td>5.28</td>
-                  <td>0.259s</td>
-                </tr>
-                <tr>
-                  <td>CTranslate2 workers</td>
-                  <td>6.62</td>
-                  <td>7.394s</td>
-                </tr>
-                <tr>
-                  <td>Async queue</td>
-                  <td>2.18</td>
-                  <td>22.016s</td>
-                </tr>
-                <tr>
-                  <td>Micro-batch</td>
-                  <td>1.41</td>
-                  <td>32.990s</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <figure class="evidence-figure">
+            <img
+              src="../img/case-studies/letsplay-concurrency.svg"
+              alt="Bar comparison of throughput and P95 latency for sequential baseline, CTranslate2 workers, async queue, and micro-batch request processing"
+            />
+            <figcaption>
+              <strong>Figure 3 · Throughput vs tail latency.</strong> In this recorded 50-request experiment, the worker configuration raised QPS by about 25% but increased P95 latency from 0.259s to 7.394s. The figure is a decision artifact for this implementation, not a universal CTranslate2 benchmark.
+            </figcaption>
+          </figure>
 
           <p>
             The absolute numbers came from a specific experimental implementation and are

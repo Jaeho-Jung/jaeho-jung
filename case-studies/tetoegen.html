@@ -47,16 +47,6 @@
             common “AI” layer. A similar UX does not justify a similar model.
           </p>
 
-          <figure class="evidence-figure">
-            <img
-              src="../img/case-studies/tetoegen-product-family.svg"
-              alt="System diagram showing four TetoEgen product verticals sharing one product shell while using different inference mechanisms"
-            />
-            <figcaption>
-              <strong>Figure 1 · Product architecture.</strong> Face analysis, image classification, geometry-driven rules, and deterministic questionnaire scoring share product infrastructure while keeping their decision mechanisms distinct.
-            </figcaption>
-          </figure>
-
           <h2>1. Replacing face-shape labels with measurable geometry</h2>
 
           <p>
@@ -86,7 +76,7 @@
               alt="Evidence chain from pose quality and continuous facial measurements through a silhouette engine to ranked hairstyle recommendations"
             />
             <figcaption>
-              <strong>Figure 2 · Recommendation evidence chain.</strong> Input quality, continuous geometry, target silhouette construction, and ranking are separate stages that can be tested and calibrated independently.
+              <strong>Figure 1 · Recommendation evidence chain.</strong> Input quality, continuous geometry, target silhouette construction, and ranking are separate stages that can be tested and calibrated independently.
             </figcaption>
           </figure>
 
@@ -120,16 +110,6 @@
             rather than category generalization.
           </p>
 
-          <figure class="evidence-figure">
-            <img
-              src="../img/case-studies/tetoegen-animal-data.svg"
-              alt="Animal-face dataset workflow from source discovery through face quality review, identity-disjoint train validation test splits, augmentation, lineage, and evaluation"
-            />
-            <figcaption>
-              <strong>Figure 3 · Dataset integrity pipeline.</strong> Splitting by identity is intended to prevent evaluation leakage across multiple photos of the same person.
-            </figcaption>
-          </figure>
-
           <p>
             The collector also rejects crops requiring artificial padding or excessive
             upscaling, records fallback-thumbnail use, and keeps every record marked for
@@ -155,16 +135,6 @@
             High-sensitivity inputs stay out of normal funnel telemetry: observability should
             support product decisions without becoming indiscriminate collection.
           </p>
-
-          <figure class="evidence-figure">
-            <img
-              src="../img/case-studies/tetoegen-evidence-boundary.svg"
-              alt="Review framework connecting input quality, runtime contracts, behavior evidence, and privacy-safe observability to release decisions"
-            />
-            <figcaption>
-              <strong>Figure 4 · Evidence boundary.</strong> A generated result is only one event in the chain; input validity, runtime semantics, inspectable behavior, and privacy-safe observability determine whether the claim is supported.
-            </figcaption>
-          </figure>
 
           <h2>4. The review frame I kept</h2>
 
